@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function Header() {
@@ -75,6 +76,10 @@ export default function Header() {
               Contacto
               <span className="absolute bottom-0 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" style={{backgroundColor: '#006935'}}></span>
             </a>
+            <Link href="/registro-terceros" className="text-gray-700 font-medium transition-colors duration-300 relative group hover:text-green-600 border border-gray-300 px-3 py-2 rounded-lg hover:border-green-600">
+              <i className="fas fa-user-plus mr-2"></i>
+              Registro Terceros
+            </Link>
           </div>
           
           <div className="hidden lg:flex">
@@ -118,6 +123,10 @@ export default function Header() {
             <a href="#proyectos" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Proyectos</a>
             <a href="#experiencia" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Experiencia</a>
             <a href="#contacto" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Contacto</a>
+            <Link href="/registro-terceros" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">
+              <i className="fas fa-user-plus mr-2"></i>
+              Registro Terceros
+            </Link>
             {isLoggedIn ? (
               <button 
                 onClick={() => {closeMenu(); handleLogout();}}
