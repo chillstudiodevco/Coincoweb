@@ -9,8 +9,10 @@ export default function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [loginData, setLoginData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
 
@@ -19,18 +21,45 @@ export default function Header() {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
-    setLoginData({ email: '', password: '' });
+    setLoginData({ username: '', password: '' });
+    setError('');
   };
   const togglePassword = () => setShowPassword(!showPassword);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulación de login - en un proyecto real, aquí se validaría con el backend
-    if (loginData.email && loginData.password) {
-      setIsLoggedIn(true);
-      closeModal();
-      // Redirigir al dashboard
-      window.location.href = '/dashboard';
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: loginData.username,
+          password: loginData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setIsLoggedIn(true);
+        closeModal();
+        // Guardar información del usuario en localStorage si es necesario
+        localStorage.setItem('user', JSON.stringify(data.user));
+        // Redirigir al dashboard
+        window.location.href = '/dashboard';
+      } else {
+        setError(data.error || 'Error en el login');
+      }
+    } catch (err) {
+      setError('Error de conexión. Inténtelo de nuevo.');
+      console.error('Error en login:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,7 +77,6 @@ export default function Header() {
               <div className="absolute inset-0 rounded-full blur-lg" style={{backgroundColor: 'rgba(0, 105, 53, 0.2)'}}></div>
               <Image src="/CoincoLogo.png" alt="Logo de COINCO S.A.S" width={48} height={48} className="h-12 w-auto relative z-10" />
             </div>
-            <span className="text-xl font-bold text-coinco-dark hidden sm:block">COINCO</span>
           </a>
           
           <div className="hidden lg:flex items-center space-x-8">
@@ -176,18 +204,24 @@ export default function Header() {
             
             {/* Contenido del formulario */}
             <div className="p-8">
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+                  <i className="fas fa-exclamation-triangle mr-2"></i>
+                  {error}
+                </div>
+              )}
               <form onSubmit={handleLogin} className="space-y-6">
                 <div className="group">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Correo Electrónico</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <i className="fas fa-envelope text-gray-400"></i>
+                      <i className="fas fa-user text-gray-400"></i>
                     </div>
                     <input 
-                      type="email" 
-                      value={loginData.email}
-                      onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                      placeholder="proveedor@empresa.com" 
+                      type="text" 
+                      value={loginData.username}
+                      onChange={(e) => setLoginData({...loginData, username: e.target.value})}
+                      placeholder="nombre.usuario" 
                       className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white"
                       style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
                       onFocus={(e) => e.target.style.borderColor = '#006935'}
@@ -236,13 +270,23 @@ export default function Header() {
                 
                 <button 
                   type="submit" 
-                  className="w-full text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center cursor-pointer"
-                  style={{backgroundColor: '#006935'}}
-                  onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#004d26'}
-                  onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
+                  disabled={isLoading}
+                  className="w-full text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{backgroundColor: isLoading ? '#9ca3af' : '#006935'}}
+                  onMouseEnter={(e) => !isLoading && ((e.target as HTMLElement).style.backgroundColor = '#004d26')}
+                  onMouseLeave={(e) => !isLoading && ((e.target as HTMLElement).style.backgroundColor = '#006935')}
                 >
-                  <i className="fas fa-sign-in-alt mr-2"></i>
-                  Iniciar Sesión
+                  {isLoading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Autenticando...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-sign-in-alt mr-2"></i>
+                      Iniciar Sesión
+                    </>
+                  )}
                 </button>
               </form>
               

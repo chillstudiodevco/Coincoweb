@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -21,9 +22,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="scroll-smooth">
-      <head>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-      </head>
       <body className={`${poppins.variable} bg-gray-50 text-coinco-dark font-sans`}>
         {children}
       </body>
