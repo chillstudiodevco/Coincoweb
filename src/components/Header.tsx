@@ -4,6 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
+// Feature flag: activar/desactivar portal de proveedores y registro de terceros
+const ENABLE_PORTAL = false; // Cambiar a true cuando se quiera habilitar nuevamente
+
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,37 +107,41 @@ export default function Header() {
               Contacto
               <span className="absolute bottom-0 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" style={{backgroundColor: '#006935'}}></span>
             </a>
-            <Link href="/registro-terceros" className="text-gray-700 font-medium transition-colors duration-300 relative group hover:text-green-600 border border-gray-300 px-3 py-2 rounded-lg hover:border-green-600">
-              <i className="fas fa-user-plus mr-2"></i>
-              Registro Terceros
-            </Link>
-          </div>
-          
-          <div className="hidden lg:flex">
-            {isLoggedIn ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700">Bienvenido, Proveedor</span>
-                <button
-                  onClick={handleLogout}
-                  className="text-red-600 hover:text-red-700 transition-colors duration-300 flex items-center cursor-pointer"
-                >
-                  <i className="fas fa-sign-out-alt mr-2"></i>
-                  Salir
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={openModal}
-                className="text-white font-bold py-3 px-6 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center cursor-pointer"
-                style={{backgroundColor: '#006935'}}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#004d26'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
-              >
-                <i className="fas fa-user-shield mr-2"></i>
-                Acceso Proveedores
-              </button>
+            {ENABLE_PORTAL && (
+              <Link href="/registro-terceros" className="text-gray-700 font-medium transition-colors duration-300 relative group hover:text-green-600 border border-gray-300 px-3 py-2 rounded-lg hover:border-green-600">
+                <i className="fas fa-user-plus mr-2"></i>
+                Registro Terceros
+              </Link>
             )}
           </div>
+          
+          {ENABLE_PORTAL && (
+            <div className="hidden lg:flex">
+              {isLoggedIn ? (
+                <div className="flex items-center space-x-4">
+                  <span className="text-gray-700">Bienvenido, Proveedor</span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-red-600 hover:text-red-700 transition-colors duration-300 flex items-center cursor-pointer"
+                  >
+                    <i className="fas fa-sign-out-alt mr-2"></i>
+                    Salir
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={openModal}
+                  className="text-white font-bold py-3 px-6 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center cursor-pointer"
+                  style={{backgroundColor: '#006935'}}
+                  onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#004d26'}
+                  onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
+                >
+                  <i className="fas fa-user-shield mr-2"></i>
+                  Acceso Proveedores
+                </button>
+              )}
+            </div>
+          )}
           
           <div className="lg:hidden">
             <button onClick={toggleMenu} className="text-coinco-dark focus:outline-none p-2 rounded-lg hover:bg-gray-100 transition-colors duration-300">
@@ -151,36 +158,40 @@ export default function Header() {
             <a href="#proyectos" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Proyectos</a>
             <a href="#experiencia" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Experiencia</a>
             <a href="#contacto" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Contacto</a>
-            <Link href="/registro-terceros" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">
-              <i className="fas fa-user-plus mr-2"></i>
-              Registro Terceros
-            </Link>
-            {isLoggedIn ? (
-              <button 
-                onClick={() => {closeMenu(); handleLogout();}}
-                className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
-              >
-                <i className="fas fa-sign-out-alt mr-2"></i>
-                Cerrar Sesión
-              </button>
-            ) : (
-              <button 
-                onClick={() => {closeMenu(); openModal();}}
-                className="mt-4 w-full text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
-                style={{backgroundColor: '#006935'}}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#004d26'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
-              >
-                <i className="fas fa-user-shield mr-2"></i>
-                Acceso Proveedores
-              </button>
+            {ENABLE_PORTAL && (
+              <>
+                <Link href="/registro-terceros" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">
+                  <i className="fas fa-user-plus mr-2"></i>
+                  Registro Terceros
+                </Link>
+                {isLoggedIn ? (
+                  <button 
+                    onClick={() => {closeMenu(); handleLogout();}}
+                    className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
+                  >
+                    <i className="fas fa-sign-out-alt mr-2"></i>
+                    Cerrar Sesión
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => {closeMenu(); openModal();}}
+                    className="mt-4 w-full text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
+                    style={{backgroundColor: '#006935'}}
+                    onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#004d26'}
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
+                  >
+                    <i className="fas fa-user-shield mr-2"></i>
+                    Acceso Proveedores
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
       </header>
 
       {/* Modal mejorado */}
-      {!isLoggedIn && (
+      {ENABLE_PORTAL && !isLoggedIn && (
         <div className={`modal fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${isModalOpen ? 'opacity-100 bg-black/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none bg-black/0'}`}>
           <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-md m-4 relative overflow-hidden transform transition-all duration-300 ${isModalOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
             {/* Header del modal con gradiente */}

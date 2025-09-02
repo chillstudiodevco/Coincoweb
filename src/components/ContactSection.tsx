@@ -161,7 +161,7 @@ export default function ContactSection() {
               </h4>
               <div className="rounded-xl overflow-hidden shadow-lg border-2 border-white/20">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.648023590022!2d-74.0551098852378!3d4.65671299662058!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9a44a332152b%3A0x6b56b5090416cd96!2sCra.%207%20%2371-21%2C%20Bogot%C3%A1!5e0!3m2!1ses!2sco!4v1678148386415!5m2!1ses!2sco"
+                  src="https://www.google.com/maps/embed?pb=!3m1!4b1!4m10!1m2!2m1!1sCra.+11+%238-92,+Bogotá!3m6!1s0x8e3f9aaf4dc2aaf9:0x73886041b7e76fa2!8m2!3d4.6964296!4d-74.0362082!15sChZDcmEuIDExICM4LTkyLCBCb2dvdMOhkgERY29tcG91bmRfYnVpbGRpbmfgAQA!16s%2Fg%2F11xt1dr2wv!5m2!1e4!1e1?entry=ttu&g_ep=EgoyMDI1MDgyNS4wIKXMDSoASAFQAw%3D%3D"
                   width="100%"
                   height="250"
                   style={{ border: 0 }}

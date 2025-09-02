@@ -3,33 +3,33 @@ import Image from 'next/image';
 export default function ProjectsSection() {
   const projects = [
     {
-      src: "https://i.imgur.com/uNf8m5W.jpeg",
+      src: "/construccion.png",
       alt: "Construcción de Edificaciones",
       title: "Construcción de Edificaciones"
     },
     {
-      src: "https://i.imgur.com/6Yp3j2f.jpeg",
+      src: "/demarcacion_vial.png",
       alt: "Demarcación Vial",
       title: "Demarcación Vial"
     },
     {
-      src: "https://i.imgur.com/1nQY5q4.jpeg",
+      src: "/reforzamiento_estructural.png",
       alt: "Reforzamiento Estructural",
       title: "Reforzamiento Estructural"
     },
     {
-      src: "https://i.imgur.com/7tC8A9S.jpeg",
+      src: "/alcantarillado.png",
       alt: "Construcción de Alcantarillado",
       title: "Construcción de Alcantarillado"
     },
     {
-      src: "https://i.imgur.com/r3b7Y2g.jpeg",
+      src: "/mantenimiento_vial.png",
       alt: "Mantenimiento de Vías",
       title: "Mantenimiento de Vías"
     },
     {
-      src: "https://i.imgur.com/P2D9dYh.jpeg",
-      alt: "Mantenimiento de Edificaciones - Grupo Aéreo del Oriente",
+      src: "/mantenimiento_edificaciones.png",
+      alt: "Mantenimiento de Edificaciones",
       title: "Mantenimiento de Edificaciones"
     }
   ];

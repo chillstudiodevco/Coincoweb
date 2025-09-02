@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function ExperienceSection() {
   const stats = [
     {
@@ -26,26 +28,37 @@ export default function ExperienceSection() {
     }
   ];
 
-  const clients = [
+  interface ClientItem {
+    name: string;
+    category: string;
+    logo: string; // ruta dentro de /public o URL remota permitida en next.config
+  }
+
+  const clients: ClientItem[] = [
     {
       name: "Caja de la Vivienda Popular",
-      category: "Entidad Pública"
+      category: "Entidad Pública",
+      logo: "/cvp.png" // Reemplaza con /logos/caja-vivienda.png si agregas archivo
     },
     {
       name: "Fiduciaria Bogotá",
-      category: "Sector Financiero"
+      category: "Sector Financiero",
+      logo: "/fiduciaria_bogota.jpg" // Placeholder
     },
     {
       name: "Rama Judicial",
-      category: "Entidad Pública"
+      category: "Entidad Pública",
+      logo: "/file.svg"
     },
     {
       name: "Fuerza Aérea Colombiana",
-      category: "Sector Defensa"
+      category: "Sector Defensa",
+      logo: "/globe.svg"
     },
     {
       name: "Secretaría Distrital del Hábitat",
-      category: "Entidad Pública"
+      category: "Entidad Pública",
+      logo: "/LogoCOINCO.svg" // Temporal, reemplazar cuando tengas el logo real
     }
   ];
 
@@ -103,13 +116,19 @@ export default function ExperienceSection() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {clients.map((client, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="group bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 border border-gray-100"
               >
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-coinco-green to-green-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <i className="fas fa-building text-white text-lg"></i>
+                  <div className="relative w-12 h-12 mx-auto mb-3 group-hover:scale-110 transition-transform duration-300 rounded-full overflow-hidden ring-2 ring-coinco-green/30 bg-white flex items-center justify-center">
+                    <Image
+                      src={client.logo}
+                      alt={`Logo ${client.name}`}
+                      fill
+                      sizes="48px"
+                      className="object-contain p-1"
+                    />
                   </div>
                   <h4 className="font-bold text-sm text-coinco-dark mb-1 group-hover:text-coinco-green transition-colors duration-300">
                     {client.name}
