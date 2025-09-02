@@ -33,14 +33,14 @@ export default function ProjectsSection() {
       title: "Mantenimiento de Edificaciones"
     }
   ];
-  
+
 
   return (
     <section id="proyectos" className="py-24 bg-white">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-coinco-dark">Galería de Proyectos</h2>
-          <p className="text-gray-600 mt-2 text-lg">Nuestro compromiso y calidad en imágenes.</p>
+          <p className="text-gray-600 mt-2 text-lg">Compromisos hechos realidad.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project, index) => (

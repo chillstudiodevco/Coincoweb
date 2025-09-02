@@ -48,17 +48,17 @@ export default function ExperienceSection() {
     {
       name: "Rama Judicial",
       category: "Entidad Pública",
-      logo: "/file.svg"
+      logo: "/rama_judicial.png"
     },
     {
       name: "Fuerza Aérea Colombiana",
       category: "Sector Defensa",
-      logo: "/globe.svg"
+      logo: "/fac.jpg"
     },
     {
       name: "Secretaría Distrital del Hábitat",
       category: "Entidad Pública",
-      logo: "/LogoCOINCO.svg" // Temporal, reemplazar cuando tengas el logo real
+      logo: "/secretaria_habitat.jpg" // Temporal, reemplazar cuando tengas el logo real
     }
   ];
 

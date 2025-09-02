@@ -78,7 +78,7 @@ export default function Header() {
           <a href="#" title="COINCO S.A.S" className="flex items-center space-x-3 hover:scale-105 transition-transform duration-300">
             <div className="relative">
               <div className="absolute inset-0 rounded-full blur-lg" style={{backgroundColor: 'rgba(0, 105, 53, 0.2)'}}></div>
-              <Image src="/CoincoLogo.png" alt="Logo de COINCO S.A.S" width={48} height={48} className="h-12 w-auto relative z-10" />
+              <Image src="/logo_coinco_vec.svg" alt="Logo de COINCO S.A.S" width={48} height={48} className="h-12 w-auto relative z-10" />
             </div>
           </a>
           

@@ -16,7 +16,7 @@ export default function HeroSection() {
           </div>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-4 drop-shadow-2xl text-white">
-          COINCO S.A.S
+          CONSTRUCTORA DE INFRAESTRUCTURA COLOMBIANA COINCO S.A.S
         </h1>
         <p className="text-lg md:text-xl text-gray-200 mb-8 drop-shadow-lg max-w-2xl mx-auto leading-relaxed">
           Calidad, responsabilidad y mejora continua en cada proyecto.
