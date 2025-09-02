@@ -76,10 +76,14 @@ export default function Header() {
       <header id="header" className="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-40 border-b border-gray-100">
         <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
           <a href="#" title="COINCO S.A.S" className="flex items-center space-x-3 hover:scale-105 transition-transform duration-300">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full blur-lg" style={{backgroundColor: 'rgba(0, 105, 53, 0.2)'}}></div>
-              <Image src="/logo_coinco_vec.svg" alt="Logo de COINCO S.A.S" width={48} height={48} className="h-12 w-auto relative z-10" />
-            </div>
+            <Image 
+              src="/logo_coinco_vec.svg" 
+              alt="Logo de COINCO S.A.S" 
+              width={120} 
+              height={120} 
+              className="h-14 sm:h-16 lg:h-20 w-auto" 
+              priority
+            />
           </a>
           
           <div className="hidden lg:flex items-center space-x-8">
