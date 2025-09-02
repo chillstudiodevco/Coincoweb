@@ -33,6 +33,7 @@ export default function ProjectsSection() {
       title: "Mantenimiento de Edificaciones"
     }
   ];
+  
 
   return (
     <section id="proyectos" className="py-24 bg-white">
