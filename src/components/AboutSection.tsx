@@ -35,9 +35,10 @@ export default function AboutSection() {
           </div>
           
           <div className="lg:w-1/2 grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Tarjeta de Misión - ÍCONO CAMBIADO */}
             <div className="group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-white/30">
               <div className="bg-coinco-green p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                <i className="fas fa-bullseye text-white text-2xl"></i>
+                <i className="fas fa-crosshairs text-white text-2xl"></i>
               </div>
               <h4 className="font-bold text-xl mb-3 text-coinco-dark">Misión</h4>
               <p className="text-sm text-gray-600 leading-relaxed">
@@ -45,6 +46,7 @@ export default function AboutSection() {
               </p>
             </div>
             
+            {/* Tarjeta de Visión */}
             <div className="group bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-white/30">
               <div className="bg-blue-600 p-4 rounded-full w-16 h-16 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                 <i className="fas fa-eye text-white text-2xl"></i>
