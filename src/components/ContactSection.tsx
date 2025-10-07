@@ -26,19 +26,19 @@ export default function ContactSection() {
     {
       icon: "fas fa-map-marker-alt",
       title: "Ubicación",
-      content: "Dirección Principal, Bogotá, Colombia",
+      content: "Carrera 11 #92-20 oficina 302, Bogotá, Colombia",
       color: "from-red-500 to-pink-600"
     },
     {
       icon: "fas fa-phone-alt", 
       title: "Teléfono",
-      content: "(+57) 300 123 4567",
+      content: "(+57) 317 6816442",
       color: "from-blue-500 to-indigo-600"
     },
     {
       icon: "fas fa-envelope",
       title: "Email",
-      content: "contacto@coinco.com.co", 
+      content: "administrativo@coincosas.com", 
       color: "from-coinco-green to-green-600"
     },
     {
@@ -161,7 +161,7 @@ export default function ContactSection() {
               </h4>
               <div className="rounded-xl overflow-hidden shadow-lg border-2 border-white/20">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.648023590022!2d-74.0551098852378!3d4.65671299662058!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9a44a332152b%3A0x6b56b5090416cd96!2sCra.%207%20%2371-21%2C%20Bogot%C3%A1!5e0!3m2!1ses!2sco!4v1678148386415!5m2!1ses!2sco"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d994.1376875508904!2d-74.04854598736819!3d4.6738760236567085!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9a8e7f8e0bfd%3A0xe9aedeea054e0dd2!2sCra.%2011%20%2392-20%2C%20Bogot%C3%A1!5e0!3m2!1ses-419!2sco!4v1756824776506!5m2!1ses-419!2sco"
                   width="100%"
                   height="250"
                   style={{ border: 0 }}
