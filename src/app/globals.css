@@ -14,7 +14,7 @@ body {
 }
 
 .hero-bg {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/portada.png');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/banner.jpg');
   background-size: cover;
   background-position: center;
 }
