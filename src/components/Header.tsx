@@ -4,8 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
-// Feature flag: activar/desactivar portal de proveedores y registro de terceros
-const ENABLE_PORTAL = false; // Cambiar a true cuando se quiera habilitar nuevamente
+// Feature flags: control independiente de funcionalidades
+const ENABLE_LOGIN_PORTAL = false; // Portal de proveedores (login/dashboard)
+const ENABLE_THIRD_PARTY_REGISTRATION = false; // Registro de terceros
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -111,7 +112,7 @@ export default function Header() {
               Contacto
               <span className="absolute bottom-0 left-0 w-0 h-0.5 group-hover:w-full transition-all duration-300" style={{backgroundColor: '#006935'}}></span>
             </a>
-            {ENABLE_PORTAL && (
+            {ENABLE_THIRD_PARTY_REGISTRATION && (
               <Link href="/registro-terceros" className="text-gray-700 font-medium transition-colors duration-300 relative group hover:text-green-600 border border-gray-300 px-3 py-2 rounded-lg hover:border-green-600">
                 <i className="fas fa-user-plus mr-2"></i>
                 Registro Terceros
@@ -119,7 +120,7 @@ export default function Header() {
             )}
           </div>
           
-          {ENABLE_PORTAL && (
+          {ENABLE_LOGIN_PORTAL && (
             <div className="hidden lg:flex">
               {isLoggedIn ? (
                 <div className="flex items-center space-x-4">
@@ -162,31 +163,37 @@ export default function Header() {
             <a href="#proyectos" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Proyectos</a>
             <a href="#experiencia" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Experiencia</a>
             <a href="#contacto" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">Contacto</a>
-            {ENABLE_PORTAL && (
+            {(ENABLE_THIRD_PARTY_REGISTRATION || ENABLE_LOGIN_PORTAL) && (
               <>
-                <Link href="/registro-terceros" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">
-                  <i className="fas fa-user-plus mr-2"></i>
-                  Registro Terceros
-                </Link>
-                {isLoggedIn ? (
-                  <button 
-                    onClick={() => {closeMenu(); handleLogout();}}
-                    className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
-                  >
-                    <i className="fas fa-sign-out-alt mr-2"></i>
-                    Cerrar Sesión
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => {closeMenu(); openModal();}}
-                    className="mt-4 w-full text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
-                    style={{backgroundColor: '#006935'}}
-                    onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#004d26'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
-                  >
-                    <i className="fas fa-user-shield mr-2"></i>
-                    Acceso Proveedores
-                  </button>
+                {ENABLE_THIRD_PARTY_REGISTRATION && (
+                  <Link href="/registro-terceros" onClick={closeMenu} className="block py-3 text-gray-700 hover:text-green-600 transition-colors duration-300 border-b border-gray-200 hover:border-green-600">
+                    <i className="fas fa-user-plus mr-2"></i>
+                    Registro Terceros
+                  </Link>
+                )}
+                {ENABLE_LOGIN_PORTAL && (
+                  <>
+                    {isLoggedIn ? (
+                      <button 
+                        onClick={() => {closeMenu(); handleLogout();}}
+                        className="mt-4 w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
+                      >
+                        <i className="fas fa-sign-out-alt mr-2"></i>
+                        Cerrar Sesión
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => {closeMenu(); openModal();}}
+                        className="mt-4 w-full text-white font-bold py-3 px-4 rounded-full transition-all duration-300 shadow-lg flex items-center justify-center cursor-pointer"
+                        style={{backgroundColor: '#006935'}}
+                        onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#004d26'}
+                        onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
+                      >
+                        <i className="fas fa-user-shield mr-2"></i>
+                        Acceso Proveedores
+                      </button>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -195,7 +202,7 @@ export default function Header() {
       </header>
 
       {/* Modal mejorado */}
-      {ENABLE_PORTAL && !isLoggedIn && (
+      {ENABLE_LOGIN_PORTAL && !isLoggedIn && (
         <div className={`modal fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${isModalOpen ? 'opacity-100 bg-black/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none bg-black/0'}`}>
           <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-md m-4 relative overflow-hidden transform transition-all duration-300 ${isModalOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
             {/* Header del modal con gradiente */}
