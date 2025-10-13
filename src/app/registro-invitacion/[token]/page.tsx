@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
+import Header from '@/components/Header';
 import { invitationService } from '@/lib/api';
 import type { TerceroInfo, CompleteRegistrationPayload } from '@/types/terceros';
 
@@ -204,19 +204,7 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
   if (error && !terceroInfo) {
     return (
       <div className="min-h-screen bg-gray-100">
-        <header className="bg-white shadow-md">
-          <div className="container mx-auto px-6 py-4">
-            <Link href="/" className="flex items-center">
-              <Image 
-                src="/CoincoLogo.png" 
-                alt="Logo COINCO" 
-                width={48} 
-                height={48} 
-                className="h-12 w-auto" 
-              />
-            </Link>
-          </div>
-        </header>
+        <Header />
         <main className="container mx-auto p-8">
           <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
             <div className="text-center">
@@ -268,22 +256,7 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-md">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center">
-            <Image 
-              src="/CoincoLogo.png" 
-              alt="Logo COINCO" 
-              width={48} 
-              height={48} 
-              className="h-12 w-auto" 
-            />
-          </Link>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-            Registro de Tercero
-          </h1>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container mx-auto p-4 md:p-8">
