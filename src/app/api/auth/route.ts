@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Configuración de Salesforce (estas variables deben estar en .env.local)
-    const SF_LOGIN_URL = process.env.SALESFORCE_LOGIN_URL || 'https://login.salesforce.com';
+    const SF_LOGIN_URL = process.env.SALESFORCE_LOGIN_URL;
     const SF_CLIENT_ID = process.env.SALESFORCE_CLIENT_ID;
     const SF_CLIENT_SECRET = process.env.SALESFORCE_CLIENT_SECRET;
     const SF_USERNAME = process.env.SALESFORCE_USERNAME;
