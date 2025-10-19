@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import { Analytics } from '@vercel/analytics/next';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -24,6 +25,7 @@ export default function RootLayout({
     <html lang="es" className="scroll-smooth">
       <body className={`${poppins.variable} bg-gray-50 text-coinco-dark font-sans`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
