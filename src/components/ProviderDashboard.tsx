@@ -157,7 +157,6 @@ export default function ProviderDashboard() {
   const handleNewRequisition = (e: React.FormEvent) => {
     e.preventDefault();
     // Aquí se enviaría la requisición
-    console.log('Nueva requisición:', newRequisition);
     setShowNewRequisitionModal(false);
     setNewRequisition({ title: '', description: '', quantity: 1, unitPrice: 0, project: '' });
   };

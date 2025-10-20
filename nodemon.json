@@ -1,0 +1,16 @@
+{
+  "watch": [
+    ".env",
+    ".env.local",
+    "src/**/*",
+    "next.config.ts"
+  ],
+  "ext": "ts,tsx,js,jsx,json,env",
+  "ignore": [
+    "node_modules/**/*",
+    ".next/**/*",
+    "public/**/*"
+  ],
+  "exec": "next dev",
+  "delay": 1000
+}
