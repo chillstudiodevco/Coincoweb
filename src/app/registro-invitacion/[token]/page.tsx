@@ -73,11 +73,6 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
 
     try {
       const response = await invitationService.validateToken(token);
-      
-        success: response.success,
-        message: response.message,
-        hasData: !!response.data
-      });
 
       if (response.success && response.data) {
         setTerceroInfo(response.data);
@@ -87,11 +82,9 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
           setFormData(prev => ({ ...prev, email: response.data!.email }));
         }
       } else {
-        console.error('❌ [VALIDATION] Token inválido:', response.message);
         setError(response.message || 'Token inválido o expirado');
       }
-    } catch (err) {
-      console.error('❌ [VALIDATION] Error inesperado:', err);
+    } catch {
       setError('Error al validar el token');
     }
 
@@ -126,7 +119,6 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
     try {
       // Validar campos requeridos
       if (!formData.razonSocial || !formData.nit || !formData.telefono) {
-        console.warn('⚠️  [SUBMIT] Faltan campos obligatorios');
         setError('Por favor completa todos los campos obligatorios');
         setIsSubmitting(false);
         return;
@@ -135,10 +127,6 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
       // Completar registro
       const response = await invitationService.completeRegistration(token, formData);
       
-        success: response.success,
-        message: response.message
-      });
-
       if (response.success) {
         
         // Subir archivos si existen
@@ -158,11 +146,9 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
           router.push('/registro-exitoso');
         }, 3000);
       } else {
-        console.error('❌ [SUBMIT] Error en el registro:', response.message);
         setError(response.message || 'Error al completar el registro');
       }
-    } catch (err) {
-      console.error('❌ [SUBMIT] Error inesperado:', err);
+    } catch {
       setError('Error inesperado al procesar el registro');
     } finally {
       setIsSubmitting(false);

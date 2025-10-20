@@ -73,7 +73,6 @@ export async function getValidToken(): Promise<string> {
 
   // 2. Verificar caché en memoria
   if (cachedToken && tokenExpiresAt && Date.now() < tokenExpiresAt) {
-    const minutesLeft = Math.floor((tokenExpiresAt - Date.now()) / 60000);
     return cachedToken;
   }
 
