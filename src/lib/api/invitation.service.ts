@@ -16,8 +16,6 @@ class InvitationService {
    * Valida un token de invitación
    */
   async validateToken(token: string): Promise<ValidateTokenResponse> {
-    console.log('🔧 [SERVICE] validateToken - Iniciando...');
-    console.log('🔧 [SERVICE] Token:', token.substring(0, 50) + '...');
     
     try {
       // Construir URL completa (necesario para que funcione desde servidor y cliente)
@@ -26,7 +24,6 @@ class InvitationService {
         : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
       
       const url = `${baseUrl}/api/terceros/validar?token=${token}`;
-      console.log('🔧 [SERVICE] URL de API Route:', url);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -35,11 +32,8 @@ class InvitationService {
         },
       });
 
-      console.log('🔧 [SERVICE] Response status:', response.status);
-      console.log('🔧 [SERVICE] Response ok:', response.ok);
       
       const data = await response.json();
-      console.log('🔧 [SERVICE] Response data:', data);
       
       if (!response.ok) {
         console.error('🔧 [SERVICE] Error en respuesta:', data.message);
@@ -49,7 +43,6 @@ class InvitationService {
         };
       }
 
-      console.log('🔧 [SERVICE] Validación exitosa!');
       return data;
     } catch (error) {
       console.error('🔧 [SERVICE] Error en catch:', error);
@@ -67,9 +60,6 @@ class InvitationService {
     token: string,
     datosRegistro: CompleteRegistrationPayload
   ): Promise<ValidateTokenResponse> {
-    console.log('🔧 [SERVICE] completeRegistration - Iniciando...');
-    console.log('🔧 [SERVICE] Token:', token.substring(0, 50) + '...');
-    console.log('🔧 [SERVICE] Datos:', datosRegistro);
     
     try {
       // Construir URL completa (necesario para que funcione desde servidor y cliente)
@@ -78,7 +68,6 @@ class InvitationService {
         : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
       
       const url = `${baseUrl}/api/terceros/registro`;
-      console.log('🔧 [SERVICE] URL de API Route:', url);
       
       const response = await fetch(url, {
         method: 'PATCH',
@@ -91,10 +80,8 @@ class InvitationService {
         }),
       });
 
-      console.log('🔧 [SERVICE] Response status:', response.status);
       
       const data = await response.json();
-      console.log('🔧 [SERVICE] Response data:', data);
       
       if (!response.ok) {
         console.error('🔧 [SERVICE] Error en respuesta:', data.message);
@@ -104,7 +91,6 @@ class InvitationService {
         };
       }
 
-      console.log('🔧 [SERVICE] Registro completado exitosamente!');
       return data;
     } catch (error) {
       console.error('🔧 [SERVICE] Error en catch:', error);

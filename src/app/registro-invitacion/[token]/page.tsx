@@ -67,29 +67,23 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
   }, [token]);
 
   const validateInvitationToken = async () => {
-    console.log('🔍 [VALIDATION] Iniciando validación de token...');
-    console.log('🔑 [VALIDATION] Token recibido:', token.substring(0, 50) + '...');
     
     setValidatingToken(true);
     setError(null);
 
     try {
-      console.log('📡 [VALIDATION] Llamando a invitationService.validateToken...');
       const response = await invitationService.validateToken(token);
       
-      console.log('✅ [VALIDATION] Respuesta recibida:', {
         success: response.success,
         message: response.message,
         hasData: !!response.data
       });
 
       if (response.success && response.data) {
-        console.log('✅ [VALIDATION] Token válido! Datos del tercero:', response.data);
         setTerceroInfo(response.data);
         
         // Pre-llenar email si existe
         if (response.data?.email) {
-          console.log('📧 [VALIDATION] Pre-llenando email:', response.data.email);
           setFormData(prev => ({ ...prev, email: response.data!.email }));
         }
       } else {
@@ -103,7 +97,6 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
 
     setValidatingToken(false);
     setLoading(false);
-    console.log('✅ [VALIDATION] Validación completada');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -126,9 +119,6 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('📝 [SUBMIT] Iniciando envío de formulario...');
-    console.log('📝 [SUBMIT] Datos del formulario:', formData);
-    console.log('📎 [SUBMIT] Archivos adjuntos:', Object.keys(uploadedFiles));
     
     setIsSubmitting(true);
     setError(null);
@@ -143,36 +133,28 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
       }
 
       // Completar registro
-      console.log('📡 [SUBMIT] Enviando registro a Salesforce...');
       const response = await invitationService.completeRegistration(token, formData);
       
-      console.log('✅ [SUBMIT] Respuesta del registro:', {
         success: response.success,
         message: response.message
       });
 
       if (response.success) {
-        console.log('✅ [SUBMIT] Registro exitoso!');
         
         // Subir archivos si existen
         if (terceroInfo && Object.keys(uploadedFiles).length > 0) {
-          console.log(`📎 [SUBMIT] Subiendo ${Object.keys(uploadedFiles).length} archivo(s)...`);
           
           for (const [tipo, file] of Object.entries(uploadedFiles)) {
             if (file) {
-              console.log(`📤 [SUBMIT] Subiendo archivo: ${tipo} (${file.name})`);
               await invitationService.uploadFile(terceroInfo.accountId, file, tipo);
-              console.log(`✅ [SUBMIT] Archivo ${tipo} subido exitosamente`);
             }
           }
         }
 
-        console.log('🎉 [SUBMIT] Proceso completado exitosamente!');
         setSubmitSuccess(true);
         
         // Redirigir después de 3 segundos
         setTimeout(() => {
-          console.log('↪️  [SUBMIT] Redirigiendo a página de éxito...');
           router.push('/registro-exitoso');
         }, 3000);
       } else {
@@ -184,7 +166,6 @@ export default function InvitationRegistrationPage({ params }: PageProps) {
       setError('Error inesperado al procesar el registro');
     } finally {
       setIsSubmitting(false);
-      console.log('✅ [SUBMIT] Proceso de envío finalizado');
     }
   };
 

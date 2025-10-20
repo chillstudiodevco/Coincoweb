@@ -19,7 +19,6 @@ interface SalesforceAuthResponse {
 }
 
 async function testSalesforceConnection() {
-  console.log('\n🔧 Probando conexión con Salesforce...\n');
 
   // Validar variables
   const required = [
@@ -39,13 +38,9 @@ async function testSalesforceConnection() {
     process.exit(1);
   }
 
-  console.log('✅ Variables de entorno configuradas');
-  console.log(`📍 Instance: ${process.env.SALESFORCE_INSTANCE_URL || 'No configurada'}`);
-  console.log(`👤 Usuario: ${process.env.SALESFORCE_USERNAME}\n`);
 
   try {
     // Intentar autenticación
-    console.log('🔐 Intentando autenticación...');
     
     const params = new URLSearchParams({
       grant_type: 'password',
@@ -63,12 +58,8 @@ async function testSalesforceConnection() {
       }
     );
 
-    console.log('✅ Autenticación exitosa!');
-    console.log(`📌 Access Token: ${authResponse.data.access_token.substring(0, 20)}...`);
-    console.log(`📌 Instance URL: ${authResponse.data.instance_url}\n`);
 
     // Intentar query a Salesforce
-    console.log('🔍 Probando query de usuario...');
     
     const userQuery = await axios.get(
       `${authResponse.data.instance_url}/services/data/v59.0/query`,
@@ -84,14 +75,9 @@ async function testSalesforceConnection() {
 
     if (userQuery.data.records.length > 0) {
       const user = userQuery.data.records[0];
-      console.log('✅ Usuario encontrado:');
-      console.log(`   ID: ${user.Id}`);
-      console.log(`   Nombre: ${user.Name}`);
-      console.log(`   Email: ${user.Email}\n`);
     }
 
     // Test adicional: consultar organización
-    console.log('🏢 Información de la organización...');
     
     const orgQuery = await axios.get(
       `${authResponse.data.instance_url}/services/data/v59.0/query`,
@@ -107,16 +93,8 @@ async function testSalesforceConnection() {
 
     if (orgQuery.data.records.length > 0) {
       const org = orgQuery.data.records[0];
-      console.log(`   Nombre: ${org.Name}`);
-      console.log(`   Tipo: ${org.OrganizationType}`);
-      console.log(`   Instance: ${org.InstanceName}\n`);
     }
 
-    console.log('🎉 ¡Conexión con Salesforce completamente funcional!\n');
-    console.log('📝 Próximos pasos:');
-    console.log('   1. Iniciar servidor: npm run dev');
-    console.log('   2. Probar login en: http://localhost:3000');
-    console.log('   3. Verificar formularios de registro\n');
 
   } catch (error: any) {
     console.error('\n❌ Error en la conexión:\n');

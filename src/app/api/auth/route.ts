@@ -1,30 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
+import { NextResponse } from 'next/server';
 
-// Tipos para Salesforce
-interface SalesforceAuthResponse {
-  access_token: string;
-  instance_url: string;
-  id: string;
-  token_type: string;
-  issued_at: string;
-  signature: string;
-}
-
-interface SalesforceUserResponse {
-  Id: string;
-  Username: string;
-  Email: string;
-  Name: string;
-  IsActive: boolean;
-}
-
-interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export async function POST(request: NextRequest) {
+export async function POST() {
   return NextResponse.json(
     { message: 'La autenticación está en desarrollo y no está disponible actualmente.' },
     { status: 503 } // 503 Service Unavailable

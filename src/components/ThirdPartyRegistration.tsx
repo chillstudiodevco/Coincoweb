@@ -120,8 +120,6 @@ export default function ThirdPartyRegistration() {
       }
 
       // Simular envío de formulario
-      console.log('Datos del formulario:', formData);
-      console.log('Archivos adjuntos:', uploadedFiles);
 
       // Simular delay de envío
       await new Promise(resolve => setTimeout(resolve, 2000));

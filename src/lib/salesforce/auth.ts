@@ -13,7 +13,6 @@ let tokenExpiresAt: number | null = null;
  * Obtiene un nuevo token de Salesforce usando OAuth Password Flow
  */
 async function getSalesforceToken(): Promise<string> {
-  console.log('🔐 [AUTH] Obteniendo nuevo token de Salesforce...');
 
   const loginUrl = process.env.SALESFORCE_LOGIN_URL;
   const clientId = process.env.SALESFORCE_CLIENT_ID;
@@ -46,7 +45,6 @@ async function getSalesforceToken(): Promise<string> {
   }
 
   const data = await response.json();
-  console.log('✅ [AUTH] Token obtenido exitosamente');
   
   return data.access_token;
 }
@@ -59,13 +57,11 @@ async function getSalesforceToken(): Promise<string> {
  * 3. Obtiene uno nuevo de Salesforce
  */
 export async function getValidToken(): Promise<string> {
-  console.log('🔍 [AUTH] Buscando token válido...');
 
   // 1. Intentar obtener de Edge Config (solo funciona en Vercel)
   try {
     const edgeToken = await get<string>('salesforce_access_token');
     if (edgeToken) {
-      console.log('✅ [AUTH] Token encontrado en Edge Config');
       // Guardar en caché local también
       cachedToken = edgeToken;
       tokenExpiresAt = Date.now() + (110 * 60 * 1000); // 110 minutos
@@ -73,19 +69,16 @@ export async function getValidToken(): Promise<string> {
     }
   } catch {
     // Edge Config no está configurado o estamos en desarrollo local
-    console.log('ℹ️  [AUTH] Edge Config no disponible, usando caché local');
   }
 
   // 2. Verificar caché en memoria
   if (cachedToken && tokenExpiresAt && Date.now() < tokenExpiresAt) {
     const minutesLeft = Math.floor((tokenExpiresAt - Date.now()) / 60000);
-    console.log(`✅ [AUTH] Usando token en caché (válido por ${minutesLeft} min)`);
     return cachedToken;
   }
 
   // 3. Token expirado o no existe, obtener uno nuevo
   if (cachedToken) {
-    console.log('⚠️  [AUTH] Token en caché expirado, renovando...');
   }
 
   const newToken = await getSalesforceToken();
@@ -94,8 +87,6 @@ export async function getValidToken(): Promise<string> {
   cachedToken = newToken;
   tokenExpiresAt = Date.now() + (110 * 60 * 1000); // 110 minutos (buffer de 10min)
 
-  console.log('✅ [AUTH] Nuevo token guardado en caché');
-  console.log('💡 [AUTH] Tip: Para mejor rendimiento, configura Edge Config en Vercel');
 
   return newToken;
 }
@@ -106,7 +97,6 @@ export async function getValidToken(): Promise<string> {
 export function clearTokenCache(): void {
   cachedToken = null;
   tokenExpiresAt = null;
-  console.log('🗑️  [AUTH] Caché de tokens limpiado');
 }
 
 /**

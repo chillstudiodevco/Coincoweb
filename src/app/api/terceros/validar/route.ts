@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getValidToken } from '@/lib/salesforce/auth';
 
 export async function GET(request: NextRequest) {
-  console.log('📡 [API] /api/terceros/validar - Request recibido');
   
   try {
     // Obtener el token de los query params
@@ -22,7 +21,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('🔑 [API] Token recibido:', token.substring(0, 50) + '...');
 
     // Obtener token de Salesforce (con auto-renovación)
     const salesforceToken = await getValidToken();
@@ -36,11 +34,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('🔧 [API] Salesforce URL:', salesforceUrl);
 
     // Llamar a Salesforce
     const salesforceEndpoint = `${salesforceUrl}/services/apexrest/terceros/validar?token=${token}`;
-    console.log('📡 [API] Llamando a Salesforce:', salesforceEndpoint);
 
     const response = await fetch(salesforceEndpoint, {
       method: 'GET',
@@ -50,18 +46,13 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log('📡 [API] Salesforce response status:', response.status);
-    console.log('📡 [API] Salesforce response ok:', response.ok);
-    console.log('📡 [API] Salesforce response headers:', Object.fromEntries(response.headers.entries()));
 
     // Intentar leer la respuesta como texto primero
     const responseText = await response.text();
-    console.log('📡 [API] Salesforce response text:', responseText);
 
     let data;
     try {
       data = JSON.parse(responseText);
-      console.log('📡 [API] Salesforce response data (parsed):', data);
     } catch (e) {
       console.error('❌ [API] No se pudo parsear respuesta como JSON:', e);
       return NextResponse.json(
@@ -85,7 +76,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('✅ [API] Token validado exitosamente');
     return NextResponse.json(data);
 
   } catch (error) {

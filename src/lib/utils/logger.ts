@@ -20,7 +20,6 @@ export class Logger {
     if (!isDevelopment) return;
     
     const time = this.formatTime();
-    console.log(`[${time}] 📝 ${category} - ${message}`, data || '');
   }
 
   static error(category: string, message: string, error?: unknown): void {
@@ -41,7 +40,6 @@ export class Logger {
     if (!isDevelopment) return;
     
     const time = this.formatTime();
-    console.log(`[${time}] ✅ ${category} - ${message}`, data || '');
   }
 
   static info(category: string, message: string, data?: unknown): void {
@@ -63,7 +61,6 @@ export class Logger {
     
     const time = this.formatTime();
     const emoji = status && status < 400 ? '📡' : '❌';
-    console.log(`[${time}] ${emoji} API ${method} ${url}${status ? ` - ${status}` : ''}`, data || '');
   }
 
   static group(label: string): void {

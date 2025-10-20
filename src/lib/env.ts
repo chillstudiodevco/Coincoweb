@@ -126,10 +126,4 @@ export const isTest = serverEnv.NODE_ENV === 'test';
  * Log de configuración (solo en desarrollo)
  */
 if (isDevelopment) {
-  console.log('🔧 Configuración de entorno:');
-  console.log(`   NODE_ENV: ${serverEnv.NODE_ENV}`);
-  console.log(`   Salesforce Instance: ${serverEnv.SALESFORCE_INSTANCE_URL}`);
-  console.log(`   Salesforce User: ${serverEnv.SALESFORCE_USERNAME}`);
-  console.log(`   App URL: ${publicEnv.APP_URL}`);
-  console.log('✅ Variables de entorno validadas correctamente\n');
 }
