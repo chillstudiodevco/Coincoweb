@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 // Feature flags: control independiente de funcionalidades
-const ENABLE_LOGIN_PORTAL = false; // Portal de proveedores (login/dashboard)
+const ENABLE_LOGIN_PORTAL = true; // Portal de proveedores (login/dashboard)
 const ENABLE_THIRD_PARTY_REGISTRATION = false; // Registro de terceros
 
 export default function Header() {
