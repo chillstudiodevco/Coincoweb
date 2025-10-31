@@ -4,6 +4,13 @@ import { NextResponse } from 'next/server';
 // Body: { username, password }
 export async function POST(req: Request) {
   try {
+    const apiKeyHeader = req.headers.get('x-api-key');
+    const validKey = process.env.SALESFORCE_API_KEY;
+
+    if (apiKeyHeader !== validKey) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { username, password } = body || {};
 
