@@ -21,6 +21,18 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
+  // Rutas que deben saltarse del chequeo geográfico (integraciones, webhooks, etc.)
+  // Añade aquí los endpoints que llaman servicios externos como Salesforce
+  const skipGeoPaths = [
+    '/api/terceros',
+    '/api/upload-document',
+    '/api/auth',
+  ];
+  const isSkipPath = skipGeoPaths.some(p => request.nextUrl.pathname.startsWith(p));
+
+  // Si la ruta está en la lista de excepciones, permitirla inmediatamente
+  if (isSkipPath) return NextResponse.next();
+
   // If we're running locally or in dev, or ALLOW_ALL_COUNTRIES=true, skip geo-check
   if (isLocalhost || isDevEnv || allowAll) {
     // Only run protected-route auth checks if desired (left as placeholder)
