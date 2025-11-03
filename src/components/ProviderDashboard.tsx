@@ -134,11 +134,27 @@ export default function ProviderDashboard() {
     });
   };
 
-  const handleLogout = () => {
-    // En un proyecto real, aquí se limpiaría la sesión
-    try { localStorage.removeItem('user'); } catch {}
-    supabaseClient.auth.signOut().catch(() => {});
-    window.location.href = '/';
+  const handleLogout = async () => {
+    try {
+      // 1. Limpiar localStorage primero
+      localStorage.removeItem('user');
+      
+      // 2. Cerrar sesión en Supabase (esto limpia las cookies automáticamente)
+      const { error } = await supabaseClient.auth.signOut();
+      
+      if (error) {
+        console.error('[Logout] Error al cerrar sesión:', error);
+      }
+      
+      // 3. Redirigir después de limpiar todo
+      window.location.href = '/';
+      
+    } catch (err) {
+      console.error('[Logout] Error inesperado:', err);
+      // Forzar limpieza y redirect incluso si hay error
+      try { localStorage.clear(); } catch {}
+      window.location.href = '/';
+    }
   };
 
   useEffect(() => {

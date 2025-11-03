@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
     '/api/terceros',
     '/api/upload-document',
     '/api/auth',
-    '/api/salesforce',
+    '/api/salesforce'
   ];
   const isSkipPath = skipGeoPaths.some(p => request.nextUrl.pathname.startsWith(p));
 
