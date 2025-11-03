@@ -37,7 +37,7 @@ export async function POST(req: Request) {
           full_name,
           acceso_portal,
         },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/set-password`,
+        redirectTo: `https://coinco-mjoebiony-juan-camilos-projects-a7f113c8.vercel.app/set-password`,//cambiar por ENV
       }
     );
 
