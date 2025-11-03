@@ -14,19 +14,49 @@ export default function SetPasswordPage() {
   const supabase = supabaseClient;
 
   useEffect(() => {
-    // Verificar si hay un hash de recovery en la URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    const handleAuthCallback = async () => {
+      // Verificar si hay un hash con token en la URL
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
 
-    if (!accessToken) {
-      setError('Link inválido o expirado. Por favor, solicita uno nuevo.');
-    }
+      if (!accessToken) {
+        setError('Link inválido o expirado. Por favor, solicita uno nuevo.');
+        return;
+      }
 
-    if (type === 'recovery') {
-      setMessage('Por favor, establece tu nueva contraseña');
-    }
-  }, []);
+      // 🔥 IMPORTANTE: Establecer la sesión con el token recibido
+      if (accessToken && refreshToken) {
+        try {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (sessionError) {
+            console.error('Error setting session:', sessionError);
+            setError('Error al validar el enlace. Por favor, intenta de nuevo.');
+            return;
+          }
+
+          // Sesión establecida exitosamente
+          if (type === 'recovery') {
+            setMessage('Por favor, establece tu nueva contraseña');
+          } else if (type === 'invite') {
+            setMessage('Bienvenido! Por favor, establece tu contraseña');
+          } else {
+            setMessage('Por favor, establece tu contraseña');
+          }
+        } catch (err) {
+          console.error('Error in handleAuthCallback:', err);
+          setError('Error al procesar el enlace de autenticación');
+        }
+      }
+    };
+
+    handleAuthCallback();
+  }, [supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
