@@ -1,164 +1,91 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-
-interface Requisition {
-  id: string;
-  title: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-  project: string;
-}
-
-interface PurchaseOrder {
-  id: string;
-  orderNumber: string;
-  supplier: string;
-  items: string[];
-  totalAmount: number;
-  status: 'pending' | 'approved' | 'delivered' | 'cancelled';
-  createdAt: string;
-  deliveryDate: string;
-  project: string;
-}
-
-interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  purchaseOrderId: string;
-  amount: number;
-  status: 'pending' | 'paid' | 'overdue';
-  dueDate: string;
-  createdAt: string;
-  description: string;
-}
+import { useEffect, useState, useCallback } from 'react';
+import supabaseClient from '@/lib/supabase/client';
+import type { Requisition, PurchaseOrder, Invoice } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [showNewRequisitionModal, setShowNewRequisitionModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<unknown | null>(null);
+  const [salesforceData, setSalesforceData] = useState<unknown | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  
+  // Projects returned by Salesforce -> account.projects
+  type Participant = {
+    Descripci_n_del_servicio__c?: string | null;
+    CuentaName?: string | null;
+    Cuenta__c?: string | null;
+    Name?: string | null;
+    Id?: string | null;
+  };
+
+  type Project = {
+    participants?: Participant[];
+    Valor_del_contrato__c?: number | null;
+    Valor_total_del_contrato__c?: number | null;
+    Objeto_del_contrato__c?: string | null;
+    Name?: string | null;
+    Id?: string | null;
+  };
+
+  const [projects, setProjects] = useState<Project[]>([]);
+
+
+  const getAccountProjectsFromSalesforce = useCallback((sf: unknown): Project[] => {
+    if (!sf || typeof sf !== 'object') return [];
+    const acct = (sf as Record<string, unknown>)['account'];
+    if (!acct || typeof acct !== 'object') return [];
+    const projs = (acct as Record<string, unknown>)['projects'];
+    if (!Array.isArray(projs)) return [];
+    // We trust the upstream shape for now but keep static Project typing
+    return projs as Project[];
+  }, []);
   const [newRequisition, setNewRequisition] = useState({
     title: '',
     description: '',
     quantity: 1,
     unitPrice: 0,
-    project: ''
+    project: '',
+    service: '' // participant Id
   });
 
-  // Datos simulados
-  const requisitions: Requisition[] = [
-    {
-      id: 'REQ-001',
-      title: 'Cemento Portland Tipo I',
-      description: 'Cemento Portland Tipo I para fundación del edificio',
-      quantity: 100,
-      unitPrice: 25000,
-      totalPrice: 2500000,
-      status: 'approved',
-      createdAt: '2025-01-10',
-      project: 'Edificio Residencial Los Cedros'
-    },
-    {
-      id: 'REQ-002',
-      title: 'Varillas de Acero #4',
-      description: 'Varillas de acero corrugado calibre #4 para refuerzo estructural',
-      quantity: 200,
-      unitPrice: 35000,
-      totalPrice: 7000000,
-      status: 'pending',
-      createdAt: '2025-01-12',
-      project: 'Centro Comercial Plaza Norte'
-    },
-    {
-      id: 'REQ-003',
-      title: 'Bloques de Concreto',
-      description: 'Bloques de concreto 15x20x40 cm para mampostería',
-      quantity: 500,
-      unitPrice: 4500,
-      totalPrice: 2250000,
-      status: 'rejected',
-      createdAt: '2025-01-08',
-      project: 'Vivienda Unifamiliar San José'
+  // If projects arrive from Salesforce, pick the first project's name as default for new requisitions
+  useEffect(() => {
+    if (projects.length > 0 && !newRequisition.project) {
+      const first = projects[0];
+      setNewRequisition(prev => ({ ...prev, project: String(first?.Id ?? first?.Name ?? '') }));
     }
-  ];
+  }, [projects, newRequisition.project]);
 
-  const purchaseOrders: PurchaseOrder[] = [
-    {
-      id: 'PO-001',
-      orderNumber: 'OC-2025-001',
-      supplier: 'Cementos del Caribe S.A.',
-      items: ['Cemento Portland Tipo I', 'Arena lavada', 'Grava triturada'],
-      totalAmount: 8500000,
-      status: 'approved',
-      createdAt: '2025-01-11',
-      deliveryDate: '2025-01-20',
-      project: 'Edificio Residencial Los Cedros'
-    },
-    {
-      id: 'PO-002',
-      orderNumber: 'OC-2025-002',
-      supplier: 'Aceros Bogotá Ltda.',
-      items: ['Varillas de Acero #4', 'Malla electrosoldada', 'Alambre galvanizado'],
-      totalAmount: 12300000,
-      status: 'pending',
-      createdAt: '2025-01-13',
-      deliveryDate: '2025-01-25',
-      project: 'Centro Comercial Plaza Norte'
-    },
-    {
-      id: 'PO-003',
-      orderNumber: 'OC-2025-003',
-      supplier: 'Ladrillos y Bloques del Valle',
-      items: ['Bloques de concreto', 'Ladrillos cerámicos', 'Mortero premezclado'],
-      totalAmount: 5600000,
-      status: 'delivered',
-      createdAt: '2025-01-05',
-      deliveryDate: '2025-01-15',
-      project: 'Vivienda Unifamiliar San José'
+  // When selected project changes, default the service select to the first participant (if any)
+  useEffect(() => {
+    if (!newRequisition.project) return;
+    const found = projects.find(p => String(p.Id) === String(newRequisition.project));
+    const parts = found?.participants ?? [];
+    if (parts.length > 0) {
+      setNewRequisition(prev => ({ ...prev, service: String(parts[0].Id ?? parts[0].Name ?? '') }));
+    } else {
+      setNewRequisition(prev => ({ ...prev, service: '' }));
     }
-  ];
+  }, [newRequisition.project, projects]);
 
-  const invoices: Invoice[] = [
-    {
-      id: 'INV-001',
-      invoiceNumber: 'FC-2025-001',
-      purchaseOrderId: 'PO-003',
-      amount: 5600000,
-      status: 'paid',
-      dueDate: '2025-02-15',
-      createdAt: '2025-01-15',
-      description: 'Factura por entrega de materiales de construcción'
-    },
-    {
-      id: 'INV-002',
-      invoiceNumber: 'FC-2025-002',
-      purchaseOrderId: 'PO-001',
-      amount: 8500000,
-      status: 'pending',
-      dueDate: '2025-02-20',
-      createdAt: '2025-01-20',
-      description: 'Factura por cemento y agregados'
-    },
-    {
-      id: 'INV-003',
-      invoiceNumber: 'FC-2025-003',
-      purchaseOrderId: 'PO-002',
-      amount: 12300000,
-      status: 'overdue',
-      dueDate: '2025-01-25',
-      createdAt: '2025-01-10',
-      description: 'Factura por materiales de acero'
-    }
-  ];
+  const getParticipantsForProject = (projectId: string) => {
+    const found = projects.find(p => String(p.Id) === String(projectId));
+    return found?.participants ?? [];
+  };
+
+  // Data placeholders (replaced previous mock data). Real data should come from Salesforce/API.
+  const [requisitions] = useState<Requisition[]>([]);
+  const [purchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [invoices] = useState<Invoice[]>([]);
 
   const handleNewRequisition = (e: React.FormEvent) => {
     e.preventDefault();
     // Aquí se enviaría la requisición
     setShowNewRequisitionModal(false);
-    setNewRequisition({ title: '', description: '', quantity: 1, unitPrice: 0, project: '' });
+    setNewRequisition({ title: '', description: '', quantity: 1, unitPrice: 0, project: '', service: '' });
   };
 
   const getStatusColor = (status: string) => {
@@ -209,8 +136,126 @@ export default function ProviderDashboard() {
 
   const handleLogout = () => {
     // En un proyecto real, aquí se limpiaría la sesión
+    try { localStorage.removeItem('user'); } catch {}
+    supabaseClient.auth.signOut().catch(() => {});
     window.location.href = '/';
   };
+
+  useEffect(() => {
+    // Verificar autenticación primero
+    const checkAuth = async () => {
+      try {
+        // Verificar sesión de Supabase
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        
+        if (!session) {
+          console.log('[Dashboard] No session found, redirecting to home');
+          window.location.href = '/';
+          return;
+        }
+
+        setAuthenticated(true);
+
+        // Try to load combined user from localStorage (saved by Header/LoginModal)
+        try {
+          const raw = localStorage.getItem('user');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            setCurrentUser(parsed);
+            if (parsed.salesforce) {
+              setSalesforceData(parsed.salesforce);
+              try {
+                const projs = getAccountProjectsFromSalesforce(parsed.salesforce);
+                setProjects(projs);
+              } catch {
+                // ignore
+              }
+            }
+            setLoading(false);
+            return;
+          }
+        } catch {
+          // ignore
+        }
+
+        // Otherwise, fetch from server using current supabase session
+        const token = session.access_token;
+        const res = await fetch('/api/salesforce/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (!res.ok) {
+          console.warn('[Dashboard] Failed to fetch salesforce data');
+          setLoading(false);
+          return;
+        }
+
+        const payload = await res.json();
+        setCurrentUser(payload.user ?? null);
+        setSalesforceData(payload.salesforce ?? null);
+        
+        try {
+          const projs = getAccountProjectsFromSalesforce(payload.salesforce);
+          setProjects(projs);
+        } catch {
+          // ignore
+        }
+        
+        try { 
+          localStorage.setItem('user', JSON.stringify({ 
+            ...(payload.user ?? {}), 
+            salesforce: payload.salesforce ?? null 
+          })); 
+        } catch {}
+
+      } catch (err) {
+        console.error('[Dashboard] Error verificando autenticación:', err);
+        window.location.href = '/';
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [getAccountProjectsFromSalesforce]);
+
+  const displayCompany = () => {
+    // try a few common fields safely
+    const sf = salesforceData as Record<string, unknown> | null;
+    const tryString = (v: unknown) => (typeof v === 'string' ? v : undefined);
+    if (sf) {
+      let candidate = tryString(sf.accountName) ?? tryString(sf.name) ?? tryString(sf.company) ?? tryString(sf.AccountName);
+      const acct = sf.account as Record<string, unknown> | undefined;
+      if (!candidate && acct) {
+        candidate = tryString(acct.Name) ?? tryString(acct.name) ?? candidate;
+      }
+      if (candidate) return candidate;
+    }
+    const u = currentUser as Record<string, unknown> | null;
+    return (u?.email as string) ?? 'Proveedor';
+  };
+
+  const stripHtml = (s: string | null | undefined) => {
+    if (!s) return '';
+    return s.replace(/<[^>]*>/g, '').trim();
+  };
+
+  // Mostrar loading mientras verifica autenticación
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto mb-4" style={{borderColor: '#006935'}}></div>
+          <p className="text-gray-600">Verificando acceso...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No mostrar nada si no está autenticado (ya redirigió)
+  if (!authenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -224,7 +269,7 @@ export default function ProviderDashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">Portal de Proveedores</h1>
-                <p className="text-gray-600">Bienvenido, Construcciones ABC S.A.S.</p>
+                <p className="text-gray-600">Bienvenido, {displayCompany()}</p>
               </div>
             </div>
             <button 
@@ -370,6 +415,38 @@ export default function ProviderDashboard() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Proyectos (desde Salesforce) */}
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4">Proyectos Asociados</h3>
+                  {projects.length === 0 ? (
+                    <p className="text-gray-600">No se encontraron proyectos asociados.</p>
+                  ) : (
+                    <div className="grid gap-4">
+                      {projects.slice(0, 6).map((p, idx) => (
+                        <div key={p.Id ?? idx} className="p-4 border rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-bold text-gray-800">{p.Name ?? 'Sin nombre'}</h4>
+                              <p className="text-sm text-gray-600">{p.Objeto_del_contrato__c ?? ''}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium text-gray-800">{p.Valor_del_contrato__c ? formatCurrency(p.Valor_del_contrato__c) : '-'}</p>
+                              <p className="text-xs text-gray-500">{(p.participants ?? []).length} participante(s)</p>
+                            </div>
+                          </div>
+
+                          {(p.participants ?? []).slice(0, 3).map((par) => (
+                            <div key={par.Id} className="mt-3 text-sm text-gray-700">
+                              <p className="font-medium">{par.Name ?? ''} <span className="text-gray-500">· {par.CuentaName ?? ''}</span></p>
+                              <p className="text-gray-600">{stripHtml(par.Descripci_n_del_servicio__c ?? par.Name ?? '')}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -536,8 +613,8 @@ export default function ProviderDashboard() {
                       <i className="fas fa-building text-white text-2xl"></i>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-gray-800">Construcciones ABC S.A.S.</h3>
-                      <p className="text-gray-600">Proveedor de Materiales de Construcción</p>
+                      <h3 className="text-2xl font-bold text-gray-800">{displayCompany()}</h3>
+                      <p className="text-gray-600">Proveedor</p>
                     </div>
                   </div>
                   
@@ -691,9 +768,28 @@ export default function ProviderDashboard() {
                   required
                 >
                   <option value="">Selecciona un proyecto</option>
-                  <option value="Edificio Residencial Los Cedros">Edificio Residencial Los Cedros</option>
-                  <option value="Centro Comercial Plaza Norte">Centro Comercial Plaza Norte</option>
-                  <option value="Vivienda Unifamiliar San José">Vivienda Unifamiliar San José</option>
+                  {projects.map((p, i) => (
+                    <option key={String(p.Id ?? p.Name ?? i)} value={String(p.Id ?? p.Name ?? i)}>{String(p.Objeto_del_contrato__c ?? p.Name ?? p.Id ?? '')}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Servicio / descripción según proyecto seleccionado */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Descripción del servicio</label>
+                <select
+                  value={newRequisition.service}
+                  onChange={(e) => setNewRequisition({...newRequisition, service: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
+                  style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
+                  onFocus={(e) => e.target.style.borderColor = '#006935'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  required
+                >
+                  <option value="">Selecciona una descripción</option>
+                  {getParticipantsForProject(newRequisition.project).map((par, i) => (
+                    <option key={String(par.Id ?? par.Name ?? i)} value={String(par.Id ?? par.Name ?? '')}>{stripHtml(par.Descripci_n_del_servicio__c ?? par.Name ?? '')}</option>
+                  ))}
                 </select>
               </div>
               
