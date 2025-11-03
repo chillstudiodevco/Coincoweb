@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createMiddlewareClient } from '@/lib/supabase/middleware';
 
 // Rutas que requieren autenticación
 const protectedRoutes = ['/dashboard'];
@@ -7,7 +8,7 @@ const protectedRoutes = ['/dashboard'];
 // Lista de países permitidos (códigos ISO Alpha-2)
 const allowedCountries = ['CO']; // Ejemplo: Colombia, México, Argentina
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Detect hostname + environment to allow bypass during development/local testing
   const hostname = request.nextUrl.hostname || '';
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
@@ -27,21 +28,41 @@ export function middleware(request: NextRequest) {
     '/api/terceros',
     '/api/upload-document',
     '/api/auth',
+    '/api/salesforce',
   ];
   const isSkipPath = skipGeoPaths.some(p => request.nextUrl.pathname.startsWith(p));
 
   // Si la ruta está en la lista de excepciones, permitirla inmediatamente
   if (isSkipPath) return NextResponse.next();
 
+  // ✅ Para rutas protegidas, verificar autenticación con cookies
+  if (isProtectedRoute) {
+    try {
+      // Crear cliente de Supabase que puede leer/escribir cookies
+      const { supabase, response } = createMiddlewareClient(request);
+
+      // Verificar si hay sesión válida
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      // Si no hay sesión, redirigir a home
+      if (!session) {
+        console.log('[Middleware] No session found, redirecting to home');
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+
+      // Si hay sesión válida, permitir acceso
+      console.log('[Middleware] Valid session for user:', session.user.email);
+      return response;
+    } catch (error) {
+      console.error('[Middleware] Error verificando sesión:', error);
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
   // If we're running locally or in dev, or ALLOW_ALL_COUNTRIES=true, skip geo-check
   if (isLocalhost || isDevEnv || allowAll) {
-    // Only run protected-route auth checks if desired (left as placeholder)
-    if (isProtectedRoute) {
-      // Placeholder for JWT auth in the future
-      // const token = request.cookies.get('token');
-      // if (!token) return NextResponse.redirect(new URL('/login', request.url));
-    }
-
     return NextResponse.next();
   }
 
@@ -55,13 +76,6 @@ export function middleware(request: NextRequest) {
       { message: `Access denied from ${country}` },
       { status: 403 }
     );
-  }
-
-  // ✅ Aquí podrías agregar tu lógica de autenticación JWT si aplica
-  if (isProtectedRoute) {
-    // Ejemplo placeholder
-    // const token = request.cookies.get('token');
-    // if (!token) return NextResponse.redirect(new URL('/login', request.url));
   }
 
   return NextResponse.next();

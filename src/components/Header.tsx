@@ -1,8 +1,10 @@
-'use client';
+ 'use client';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import LoginModal from '@/components/LoginModal';
+import supabaseClient from '@/lib/supabase/client';
 
 // Feature flags: control independiente de funcionalidades
 const ENABLE_LOGIN_PORTAL = true; // Portal de proveedores (login/dashboard)
@@ -11,64 +13,23 @@ const ENABLE_THIRD_PARTY_REGISTRATION = false; // Registro de terceros
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [loginData, setLoginData] = useState({
-    username: '',
-    password: ''
-  });
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
     setIsModalOpen(false);
-    setLoginData({ username: '', password: '' });
-    setError('');
   };
-  const togglePassword = () => setShowPassword(!showPassword);
+  // placeholder (login modal manages its own password toggle)
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: loginData.username,
-          password: loginData.password
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setIsLoggedIn(true);
-        closeModal();
-        // Guardar información del usuario en localStorage si es necesario
-        localStorage.setItem('user', JSON.stringify(data.user));
-        // Redirigir al dashboard
-        window.location.href = '/dashboard';
-      } else {
-        setError(data.error || 'Error en el login');
-      }
-    } catch (err) {
-      setError('Error de conexión. Inténtelo de nuevo.');
-      console.error('Error en login:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // login handled by LoginModal component
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    try { localStorage.removeItem('user'); } catch {}
+    // Cerrar sesión de Supabase
+    supabaseClient.auth.signOut().catch(() => {});
     window.location.href = '/';
   };
 
@@ -201,127 +162,18 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Modal mejorado */}
-      {ENABLE_LOGIN_PORTAL && !isLoggedIn && (
-        <div className={`modal fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${isModalOpen ? 'opacity-100 bg-black/60 backdrop-blur-sm' : 'opacity-0 pointer-events-none bg-black/0'}`}>
-          <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-md m-4 relative overflow-hidden transform transition-all duration-300 ${isModalOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
-            {/* Header del modal con gradiente */}
-            <div className="p-8 text-white relative overflow-hidden" style={{backgroundColor: '#006935'}}>
-              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
-              <div className="absolute bottom-0 left-0 w-16 h-16 bg-yellow-400/20 rounded-full blur-lg"></div>
-              <button 
-                onClick={closeModal}
-                className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors duration-300 cursor-pointer"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-              <div className="relative z-10">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                  <i className="fas fa-user-shield text-2xl text-white"></i>
-                </div>
-                <h2 className="text-2xl font-bold text-center">Portal de Proveedores</h2>
-                <p className="text-green-100 text-center mt-2">Acceda a su cuenta empresarial</p>
-              </div>
-            </div>
-            
-            {/* Contenido del formulario */}
-            <div className="p-8">
-              {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg">
-                  <i className="fas fa-exclamation-triangle mr-2"></i>
-                  {error}
-                </div>
-              )}
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="group">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <i className="fas fa-user text-gray-400"></i>
-                    </div>
-                    <input 
-                      type="text" 
-                      value={loginData.username}
-                      onChange={(e) => setLoginData({...loginData, username: e.target.value})}
-                      placeholder="nombre.usuario" 
-                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white"
-                      style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
-                      onFocus={(e) => e.target.style.borderColor = '#006935'}
-                      onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="group">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <i className="fas fa-lock text-gray-400"></i>
-                    </div>
-                    <input 
-                      type={showPassword ? "text" : "password"}
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                      placeholder="••••••••" 
-                      className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-300 bg-gray-50 focus:bg-white"
-                      style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
-                      onFocus={(e) => e.target.style.borderColor = '#006935'}
-                      onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={togglePassword}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-300 cursor-pointer"
-                    >
-                      <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-600" />
-                    <span className="ml-2 text-sm text-gray-600">Recordarme</span>
-                  </label>
-                  <a href="#" className="text-sm text-green-600 hover:text-green-700 transition-colors duration-300 font-medium">
-                    ¿Olvidó su contraseña?
-                  </a>
-                </div>
-                
-                <button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="w-full text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{backgroundColor: isLoading ? '#9ca3af' : '#006935'}}
-                  onMouseEnter={(e) => !isLoading && ((e.target as HTMLElement).style.backgroundColor = '#004d26')}
-                  onMouseLeave={(e) => !isLoading && ((e.target as HTMLElement).style.backgroundColor = '#006935')}
-                >
-                  {isLoading ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin mr-2"></i>
-                      Autenticando...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-sign-in-alt mr-2"></i>
-                      Iniciar Sesión
-                    </>
-                  )}
-                </button>
-              </form>
-              
-              <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-                <p className="text-sm text-gray-600 mb-4">¿No tiene cuenta?</p>
-                <button className="text-green-600 hover:text-green-700 font-medium transition-colors duration-300 flex items-center justify-center mx-auto cursor-pointer">
-                  <i className="fas fa-user-plus mr-2"></i>
-                  Solicitar Registro como Proveedor
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Login modal extracted to component */}
+      {ENABLE_LOGIN_PORTAL && (
+        <LoginModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          onSuccess={(user) => {
+            setIsLoggedIn(true);
+            // persist user and redirect to dashboard like previous behavior
+            try { localStorage.setItem('user', JSON.stringify(user)); } catch {};
+            window.location.href = '/dashboard';
+          }}
+        />
       )}
     </>
   );
