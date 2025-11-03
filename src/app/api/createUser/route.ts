@@ -37,7 +37,7 @@ export async function POST(req: Request) {
           full_name,
           acceso_portal,
         },
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/set-password`,//cambiar por ENV
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/set-password`,//cambiar por ENV
       }
     );
 
