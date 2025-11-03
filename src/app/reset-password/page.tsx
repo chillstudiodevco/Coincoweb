@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import supabaseClient from '@/lib/supabase/client';
+import Link from 'next/link';
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const supabase = createClient();
+  const supabase = supabaseClient;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +31,9 @@ export default function ResetPasswordPage() {
         '✅ Te hemos enviado un email con instrucciones para restablecer tu contraseña. Revisa tu bandeja de entrada.'
       );
       setEmail('');
-    } catch (err: any) {
-      setError(err.message || 'Error al enviar el email');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al enviar el email';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -84,12 +86,12 @@ export default function ResetPasswordPage() {
         </form>
 
         <div className="mt-6 text-center">
-          
-            href="/dashboard"
+          <Link
+            href="/"
             className="text-sm text-blue-600 hover:underline"
           >
             Volver al inicio de sesión
-          </a>
+          </Link>
         </div>
       </div>
     </div>
