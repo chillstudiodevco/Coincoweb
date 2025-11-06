@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import supabaseClient from '@/lib/supabase/client';
 import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
-import type { Requisition, PurchaseOrder, Invoice } from '@/types/dashboard';
+import type { Requisition, Invoice, OrdenDeCompra } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -13,6 +13,10 @@ export default function ProviderDashboard() {
   const [salesforceData, setSalesforceData] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  
+  // Estado para órdenes de compra
+  const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>([]);
+  const [loadingOrdenes, setLoadingOrdenes] = useState(false);
   
   // Projects returned by Salesforce -> account.projects
   type Participant = {
@@ -98,8 +102,58 @@ export default function ProviderDashboard() {
 
   // Data placeholders (replaced previous mock data). Real data should come from Salesforce/API.
   const [requisitions] = useState<Requisition[]>([]);
-  const [purchaseOrders] = useState<PurchaseOrder[]>([]);
   const [invoices] = useState<Invoice[]>([]);
+
+  // Función para cargar órdenes de compra desde la API
+  const fetchOrdenes = useCallback(async () => {
+    if (!currentUser || typeof currentUser !== 'object') return;
+    
+    const metadata = (currentUser as { user_metadata?: Record<string, unknown> }).user_metadata;
+    const salesforceId = metadata?.salesforce_id as string | undefined;
+    
+    if (!salesforceId) {
+      console.warn('⚠️ [Dashboard] No se encontró salesforce_id en user_metadata');
+      return;
+    }
+
+    try {
+      setLoadingOrdenes(true);
+      console.log('🔄 [Dashboard] Cargando órdenes para participante:', salesforceId);
+
+      // Obtener token de sesión
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        console.error('❌ [Dashboard] No hay sesión activa');
+        return;
+      }
+
+      // Llamar a la API con el participanteId (salesforce_id del usuario)
+      const response = await fetch(
+        `/api/salesforce/ordenes-compra?participanteId=${salesforceId}&limit=100`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        console.error('❌ [Dashboard] Error al cargar órdenes:', result);
+        return;
+      }
+
+      const loadedOrdenes = result.data?.ordenes || [];
+      console.log(`✅ [Dashboard] ${loadedOrdenes.length} órdenes cargadas`);
+      setOrdenes(loadedOrdenes);
+
+    } catch (error) {
+      console.error('❌ [Dashboard] Error inesperado al cargar órdenes:', error);
+    } finally {
+      setLoadingOrdenes(false);
+    }
+  }, [currentUser]);
 
   const handleNewRequisition = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,6 +217,9 @@ export default function ProviderDashboard() {
 
       console.log('✅ [Dashboard] Orden creada exitosamente:', result.data);
       alert('¡Orden de compra creada exitosamente!');
+      
+      // Recargar lista de órdenes
+      await fetchOrdenes();
       
       // Cerrar modal
       setShowOrdenCompraModal(false);
@@ -323,6 +380,13 @@ export default function ProviderDashboard() {
     checkAuth();
   }, [getAccountProjectsFromSalesforce]);
 
+  // Cargar órdenes cuando el usuario esté autenticado
+  useEffect(() => {
+    if (authenticated && currentUser) {
+      fetchOrdenes();
+    }
+  }, [authenticated, currentUser, fetchOrdenes]);
+
   const displayCompany = () => {
     // try a few common fields safely
     const sf = salesforceData as Record<string, unknown> | null;
@@ -467,8 +531,8 @@ export default function ProviderDashboard() {
                   <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-600 text-sm">Órdenes Aprobadas</p>
-                        <p className="text-3xl font-bold text-green-600">{purchaseOrders.filter(po => po.status === 'approved').length}</p>
+                        <p className="text-gray-600 text-sm">Órdenes de Compra</p>
+                        <p className="text-3xl font-bold text-green-600">{ordenes.length}</p>
                       </div>
                       <i className="fas fa-check-circle text-green-500 text-2xl"></i>
                     </div>
@@ -621,46 +685,89 @@ export default function ProviderDashboard() {
                   </button>
                 </div>
                 
-                <div className="grid gap-6">
-                  {purchaseOrders.map((po) => (
-                    <div key={po.id} className="bg-white rounded-xl shadow-lg p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-800">{po.orderNumber}</h3>
-                          <p className="text-gray-600">Proveedor: {po.supplier}</p>
+                {loadingOrdenes ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600">Cargando órdenes de compra...</p>
+                  </div>
+                ) : ordenes.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+                    <i className="fas fa-shopping-cart text-gray-400 text-5xl mb-4"></i>
+                    <p className="text-gray-600 mb-2">No hay órdenes de compra</p>
+                    <p className="text-gray-500 text-sm">Crea tu primera orden usando el botón &quot;Nueva Orden&quot;</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
+                    {ordenes.map((orden) => (
+                      <div key={orden.Id} className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-800">{orden.Name || 'Sin número'}</h3>
+                            <p className="text-gray-600">
+                              Proveedor: {orden.Participante__r?.Name || 'N/A'}
+                            </p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(orden.Estado__c || 'pending')}`}>
+                            {orden.Estado__c || 'Pendiente'}
+                          </span>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(po.status)}`}>
-                          {getStatusText(po.status)}
-                        </span>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <p className="text-gray-600 text-sm">Fecha</p>
+                            <p className="font-bold">{orden.Fecha__c ? formatDate(orden.Fecha__c) : 'N/A'}</p>
+                          </div>
+                          {orden.Fecha_de_vencimiento__c && (
+                            <div>
+                              <p className="text-gray-600 text-sm">Fecha de Vencimiento</p>
+                              <p className="font-bold">{formatDate(orden.Fecha_de_vencimiento__c)}</p>
+                            </div>
+                          )}
+                          {orden.Total__c && (
+                            <div>
+                              <p className="text-gray-600 text-sm">Monto Total</p>
+                              <p className="font-bold text-lg">{formatCurrency(orden.Total__c)}</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {(orden.Forma_de_pago__c || orden.Medio_de_pago__c) && (
+                          <div className="mb-4 flex gap-4">
+                            {orden.Forma_de_pago__c && (
+                              <div>
+                                <p className="text-gray-600 text-sm">Forma de Pago</p>
+                                <p className="font-medium">{orden.Forma_de_pago__c}</p>
+                              </div>
+                            )}
+                            {orden.Medio_de_pago__c && (
+                              <div>
+                                <p className="text-gray-600 text-sm">Medio de Pago</p>
+                                <p className="font-medium">{orden.Medio_de_pago__c}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {orden.Observaciones__c && (
+                          <div className="mb-4">
+                            <p className="text-gray-600 text-sm">Observaciones</p>
+                            <p className="text-gray-800">{orden.Observaciones__c}</p>
+                          </div>
+                        )}
+                        
+                        <div className="border-t pt-4">
+                          <p className="text-gray-600 text-sm">
+                            Proyecto: <span className="font-medium">{orden.Proyecto__r?.Name || 'N/A'}</span>
+                          </p>
+                          {orden.Referencia__c && (
+                            <p className="text-gray-600 text-sm">
+                              Referencia: <span className="font-medium">{orden.Referencia__c}</span>
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="mb-4">
-                        <p className="text-gray-600 text-sm mb-2">Artículos:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {po.items.map((item, index) => (
-                            <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm">{item}</span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <p className="text-gray-600 text-sm">Monto Total</p>
-                          <p className="font-bold text-lg">{formatCurrency(po.totalAmount)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Fecha de Entrega</p>
-                          <p className="font-bold">{formatDate(po.deliveryDate)}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Creada</p>
-                          <p className="font-bold">{formatDate(po.createdAt)}</p>
-                        </div>
-                      </div>
-                      <div className="border-t pt-4">
-                        <p className="text-gray-600 text-sm">Proyecto: <span className="font-medium">{po.project}</span></p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
