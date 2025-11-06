@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     console.log('[Ordenes Compra GET] Success for user:', user.email);
     return NextResponse.json({
       success: true,
-      data: id ? data.orden : data.ordenes,
+      data: id ? { orden: data.orden } : { ordenes: data.ordenes || data || [] },
     });
 
   } catch (error: unknown) {

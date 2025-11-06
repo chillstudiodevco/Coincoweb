@@ -37,20 +37,51 @@ export interface Invoice {
   description: string;
 }
 
-// Orden de Compra de Salesforce
+// Partida de una orden de compra (respuesta de Salesforce)
+export interface PartidaSalesforce {
+  Id?: string;
+  N_mero_de_item__c?: number;
+  Descripci_n__c?: string;
+  Cantidad__c?: number;
+  Unidad_de_medida__c?: UnidadMedida;
+  Orden_de_compra__c?: string;
+}
+
+// Orden de Compra de Salesforce (respuesta completa)
 export interface OrdenDeCompra {
   Id?: string;
+  Name?: string;
+  Participante__c?: string;
+  Proyecto__c?: string;
+  Fecha__c?: string;
+  Fecha_de_vencimiento__c?: string;
+  Estado__c?: string;
+  Forma_de_pago__c?: string;
+  Medio_de_pago__c?: string;
+  Detalle__c?: string;
+  Observaciones__c?: string;
+  Referencia__c?: string;
+  Total__c?: number;
+  Participante__r?: {
+    Id?: string;
+    Name?: string;
+    Descripci_n_del_servicio__c?: string;
+  };
+  Proyecto__r?: {
+    Id?: string;
+    Name?: string;
+    Objeto_del_contrato__c?: string;
+  };
+  partidas?: PartidaSalesforce[]; // Solo viene si includePartidas=true
+}
+
+export interface OrdenDeCompraUpdatePayload {
+  Id: string; // Required for update
   Fecha__c?: string;
   Detalle__c?: string;
   Total__c?: number;
   Estado__c?: string;
-  Participante__c?: string;
-  Participante__r?: {
-    Name?: string;
-  };
 }
-
-// Unidades de medida disponibles
 export type UnidadMedida = 'm' | 'm2' | 'm3' | 'unid' | 'kg' | 'caja' | 'lb' | 'L' | 'gal' | 'cuñete';
 
 // Forma de pago
@@ -112,18 +143,4 @@ export interface OrdenDeCompra {
   Observaciones__c?: string;
   Referencia__c?: string;
   Total__c?: number;
-  Participante__r?: {
-    Name?: string;
-  };
-  Proyecto__r?: {
-    Name?: string;
-  };
-}
-
-export interface OrdenDeCompraUpdatePayload {
-  Id: string; // Required for update
-  Fecha__c?: string;
-  Detalle__c?: string;
-  Total__c?: number;
-  Estado__c?: string;
 }
