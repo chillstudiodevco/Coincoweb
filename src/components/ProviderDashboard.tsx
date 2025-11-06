@@ -119,21 +119,26 @@ export default function ProviderDashboard() {
         return;
       }
 
-      // Convertir los items a JSON para el campo Detalle__c
-      const detalleJson = JSON.stringify(data.items);
-      
-      // Calcular total (por ahora 0, se puede calcular si hay precios)
-      const total = data.items.reduce((sum, item) => {
-        return sum + (item.precioUnitario || 0) * item.cantidad;
-      }, 0);
-
-      // Crear payload para la API
+      // Crear payload con la nueva estructura: orden + partidas
       const payload = {
-        Participante__c: data.proveedorId,
-        Detalle__c: detalleJson,
-        Total__c: total,
-        Estado__c: 'Pendiente',
-        Fecha__c: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        orden: {
+          Participante__c: data.proveedorId,
+          Proyecto__c: data.proyectoId,
+          Fecha__c: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+          Fecha_de_vencimiento__c: data.fechaVencimiento || undefined,
+          Estado__c: 'Requisición generada',
+          Forma_de_pago__c: data.formaPago || undefined,
+          Medio_de_pago__c: data.medioPago || undefined,
+          Detalle__c: data.detalle || undefined,
+          Observaciones__c: data.observaciones || undefined,
+          Referencia__c: data.referencia || undefined,
+        },
+        partidas: data.items.map((item, index) => ({
+          N_mero_de_item__c: index + 1,
+          Descripci_n__c: item.descripcion,
+          Cantidad__c: item.cantidad,
+          Unidad_de_medida__c: item.unidadMedida,
+        })),
       };
 
       console.log('🚀 [Dashboard] Enviando a API:', payload);
@@ -936,6 +941,10 @@ export default function ProviderDashboard() {
         onClose={() => setShowOrdenCompraModal(false)}
         onSubmit={handleCreateOrdenCompra}
         proveedores={getAllProveedores()}
+        proyectos={projects.map(p => ({
+          id: p.Id || '',
+          nombre: p.Objeto_del_contrato__c || p.Name || 'Sin nombre'
+        }))}
       />
     </div>
   );

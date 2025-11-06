@@ -1,19 +1,26 @@
 "use client";
 
 import { useState } from 'react';
-import type { ItemOrdenCompra, UnidadMedida } from '@/types/dashboard';
+import type { ItemOrdenCompra, UnidadMedida, FormaPago, MedioPago } from '@/types/dashboard';
 
 interface OrdenCompraModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: OrdenCompraFormData) => void;
   proveedores: Array<{ id: string; nombre: string }>;
+  proyectos: Array<{ id: string; nombre: string }>;
 }
 
 export interface OrdenCompraFormData {
   proveedorId: string;
-  items: ItemOrdenCompra[];
+  proyectoId: string;
+  fechaVencimiento?: string;
+  formaPago?: FormaPago;
+  medioPago?: MedioPago;
+  detalle?: string;
   observaciones?: string;
+  referencia?: string;
+  items: ItemOrdenCompra[];
 }
 
 const UNIDADES_MEDIDA: { value: UnidadMedida; label: string }[] = [
@@ -29,9 +36,24 @@ const UNIDADES_MEDIDA: { value: UnidadMedida; label: string }[] = [
   { value: 'cuñete', label: 'Cuñete' },
 ];
 
-export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedores }: OrdenCompraModalProps) {
+const FORMAS_PAGO: FormaPago[] = ['Crédito', 'Contado', 'Anticipo'];
+
+const MEDIOS_PAGO: MedioPago[] = [
+  '(31) Transferencia Débito',
+  '(32) Transferencia Crédito',
+  '(33) Cheque',
+  '(34) Efectivo',
+];
+
+export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedores, proyectos }: OrdenCompraModalProps) {
   const [proveedorId, setProveedorId] = useState('');
+  const [proyectoId, setProyectoId] = useState('');
+  const [fechaVencimiento, setFechaVencimiento] = useState('');
+  const [formaPago, setFormaPago] = useState<FormaPago>('Crédito');
+  const [medioPago, setMedioPago] = useState<MedioPago>('(31) Transferencia Débito');
+  const [detalle, setDetalle] = useState('');
   const [observaciones, setObservaciones] = useState('');
+  const [referencia, setReferencia] = useState('');
   const [items, setItems] = useState<ItemOrdenCompra[]>([
     {
       id: crypto.randomUUID(),
@@ -78,6 +100,11 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
       return;
     }
 
+    if (!proyectoId) {
+      alert('Debe seleccionar un proyecto');
+      return;
+    }
+
     const itemsValidos = items.filter(
       item => item.descripcion.trim() && item.cantidad > 0
     );
@@ -89,13 +116,25 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
 
     onSubmit({
       proveedorId,
-      items: itemsValidos,
+      proyectoId,
+      fechaVencimiento: fechaVencimiento || undefined,
+      formaPago,
+      medioPago,
+      detalle: detalle.trim() || undefined,
       observaciones: observaciones.trim() || undefined,
+      referencia: referencia.trim() || undefined,
+      items: itemsValidos,
     });
 
     // Reset form
     setProveedorId('');
+    setProyectoId('');
+    setFechaVencimiento('');
+    setFormaPago('Crédito');
+    setMedioPago('(31) Transferencia Débito');
+    setDetalle('');
     setObservaciones('');
+    setReferencia('');
     setItems([
       {
         id: crypto.randomUUID(),
@@ -109,7 +148,13 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
   const handleClose = () => {
     // Reset form al cerrar
     setProveedorId('');
+    setProyectoId('');
+    setFechaVencimiento('');
+    setFormaPago('Crédito');
+    setMedioPago('(31) Transferencia Débito');
+    setDetalle('');
     setObservaciones('');
+    setReferencia('');
     setItems([
       {
         id: crypto.randomUUID(),
@@ -159,6 +204,109 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Proyecto */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Proyecto <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={proyectoId}
+                onChange={(e) => setProyectoId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                required
+              >
+                <option value="">Seleccione un proyecto</option>
+                {proyectos.map((proyecto) => (
+                  <option key={proyecto.id} value={proyecto.id}>
+                    {proyecto.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Fila con 3 campos */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Fecha de Vencimiento */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Fecha de Vencimiento
+                </label>
+                <input
+                  type="date"
+                  value={fechaVencimiento}
+                  onChange={(e) => setFechaVencimiento(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Forma de Pago */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Forma de Pago
+                </label>
+                <select
+                  value={formaPago}
+                  onChange={(e) => setFormaPago(e.target.value as FormaPago)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  {FORMAS_PAGO.map((forma) => (
+                    <option key={forma} value={forma}>
+                      {forma}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Medio de Pago */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Medio de Pago
+                </label>
+                <select
+                  value={medioPago}
+                  onChange={(e) => setMedioPago(e.target.value as MedioPago)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  {MEDIOS_PAGO.map((medio) => (
+                    <option key={medio} value={medio}>
+                      {medio}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Detalle y Referencia */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Detalle */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Detalle
+                </label>
+                <input
+                  type="text"
+                  value={detalle}
+                  onChange={(e) => setDetalle(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Ej: Compra de materiales para construcción"
+                />
+              </div>
+
+              {/* Referencia */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Referencia
+                </label>
+                <input
+                  type="text"
+                  value={referencia}
+                  onChange={(e) => setReferencia(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Ej: REF-2025-001"
+                />
+              </div>
             </div>
 
             {/* Items / Partidas */}
