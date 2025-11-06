@@ -50,12 +50,25 @@ export interface OrdenDeCompra {
   };
 }
 
+// Unidades de medida disponibles
+export type UnidadMedida = 'm' | 'm2' | 'm3' | 'unid' | 'kg' | 'caja' | 'lb' | 'L' | 'gal' | 'cuñete';
+
+// Item/Partida de una orden de compra
+export interface ItemOrdenCompra {
+  id: string; // ID temporal para manejo en el frontend
+  descripcion: string;
+  unidadMedida: UnidadMedida;
+  cantidad: number;
+  precioUnitario?: number; // Opcional, puede calcularse después
+  subtotal?: number; // Opcional, puede calcularse después
+}
+
 export interface OrdenDeCompraCreatePayload {
   Fecha__c?: string;
-  Detalle__c?: string;
+  Detalle__c?: string; // JSON stringificado de los items
   Total__c: number;
   Estado__c?: string;
-  Participante__c: string; // Required
+  Participante__c: string; // Required - ID del proveedor
 }
 
 export interface OrdenDeCompraUpdatePayload {

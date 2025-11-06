@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import supabaseClient from '@/lib/supabase/client';
+import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import type { Requisition, PurchaseOrder, Invoice } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [showNewRequisitionModal, setShowNewRequisitionModal] = useState(false);
+  const [showOrdenCompraModal, setShowOrdenCompraModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<unknown | null>(null);
   const [salesforceData, setSalesforceData] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,6 +78,24 @@ export default function ProviderDashboard() {
     return found?.participants ?? [];
   };
 
+  // Obtener lista de todos los proveedores (participantes únicos de todos los proyectos)
+  const getAllProveedores = useCallback(() => {
+    const proveedoresMap = new Map<string, { id: string; nombre: string }>();
+    
+    projects.forEach(project => {
+      project.participants?.forEach(participant => {
+        const id = participant.Id || participant.Name || '';
+        const nombre = participant.Descripci_n_del_servicio__c || participant.Name || 'Sin nombre';
+        
+        if (id && !proveedoresMap.has(id)) {
+          proveedoresMap.set(id, { id, nombre });
+        }
+      });
+    });
+    
+    return Array.from(proveedoresMap.values());
+  }, [projects]);
+
   // Data placeholders (replaced previous mock data). Real data should come from Salesforce/API.
   const [requisitions] = useState<Requisition[]>([]);
   const [purchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -86,6 +106,69 @@ export default function ProviderDashboard() {
     // Aquí se enviaría la requisición
     setShowNewRequisitionModal(false);
     setNewRequisition({ title: '', description: '', quantity: 1, unitPrice: 0, project: '', service: '' });
+  };
+
+  const handleCreateOrdenCompra = async (data: OrdenCompraFormData) => {
+    try {
+      console.log('📝 [Dashboard] Creando orden de compra:', data);
+      
+      // Obtener el token de sesión
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        alert('Sesión expirada. Por favor, inicia sesión nuevamente.');
+        return;
+      }
+
+      // Convertir los items a JSON para el campo Detalle__c
+      const detalleJson = JSON.stringify(data.items);
+      
+      // Calcular total (por ahora 0, se puede calcular si hay precios)
+      const total = data.items.reduce((sum, item) => {
+        return sum + (item.precioUnitario || 0) * item.cantidad;
+      }, 0);
+
+      // Crear payload para la API
+      const payload = {
+        Participante__c: data.proveedorId,
+        Detalle__c: detalleJson,
+        Total__c: total,
+        Estado__c: 'Pendiente',
+        Fecha__c: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      };
+
+      console.log('🚀 [Dashboard] Enviando a API:', payload);
+
+      // Llamar a la API
+      const response = await fetch('/api/salesforce/ordenes-compra', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        console.error('❌ [Dashboard] Error al crear orden:', result);
+        alert(`Error al crear la orden: ${result.error || 'Error desconocido'}`);
+        return;
+      }
+
+      console.log('✅ [Dashboard] Orden creada exitosamente:', result.data);
+      alert('¡Orden de compra creada exitosamente!');
+      
+      // Cerrar modal
+      setShowOrdenCompraModal(false);
+
+      // Aquí podrías recargar la lista de órdenes si la tienes
+      // TODO: Implementar recarga de órdenes
+
+    } catch (error) {
+      console.error('❌ [Dashboard] Error inesperado:', error);
+      alert('Error al crear la orden. Por favor, intenta nuevamente.');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -522,7 +605,16 @@ export default function ProviderDashboard() {
 
             {activeSection === 'purchase-orders' && (
               <div className="space-y-6">
-                <h2 className="text-3xl font-bold text-gray-800">Órdenes de Compra</h2>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-3xl font-bold text-gray-800">Órdenes de Compra</h2>
+                  <button
+                    onClick={() => setShowOrdenCompraModal(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2"
+                  >
+                    <i className="fas fa-plus"></i>
+                    Nueva Orden
+                  </button>
+                </div>
                 
                 <div className="grid gap-6">
                   {purchaseOrders.map((po) => (
@@ -837,6 +929,14 @@ export default function ProviderDashboard() {
           </div>
         </div>
       )}
+
+      {/* Modal para Nueva Orden de Compra */}
+      <OrdenCompraModal
+        isOpen={showOrdenCompraModal}
+        onClose={() => setShowOrdenCompraModal(false)}
+        onSubmit={handleCreateOrdenCompra}
+        proveedores={getAllProveedores()}
+      />
     </div>
   );
 }
