@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/salesforce/ordenes-compra
- * Body: OrdenDeCompraCreatePayload
+ * Body: OrdenDeCompraCreatePayload { orden: {...}, partidas: [...] }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -141,12 +141,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 3. Validar campos requeridos
-    if (!body.Participante__c || body.Total__c == null) {
+    // 3. Validar estructura y campos requeridos
+    if (!body.orden || !body.partidas) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Participante__c y Total__c son requeridos' 
+          error: 'Se requiere objeto "orden" y array "partidas"' 
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!body.orden.Participante__c || !body.orden.Proyecto__c) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Participante__c y Proyecto__c son requeridos en orden' 
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(body.partidas) || body.partidas.length === 0) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Se requiere al menos una partida' 
         },
         { status: 400 }
       );

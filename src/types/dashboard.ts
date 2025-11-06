@@ -53,7 +53,25 @@ export interface OrdenDeCompra {
 // Unidades de medida disponibles
 export type UnidadMedida = 'm' | 'm2' | 'm3' | 'unid' | 'kg' | 'caja' | 'lb' | 'L' | 'gal' | 'cuñete';
 
-// Item/Partida de una orden de compra
+// Forma de pago
+export type FormaPago = 'Crédito' | 'Contado' | 'Anticipo';
+
+// Medio de pago
+export type MedioPago = 
+  | '(31) Transferencia Débito'
+  | '(32) Transferencia Crédito'
+  | '(33) Cheque'
+  | '(34) Efectivo';
+
+// Partida de una orden de compra (para enviar a Salesforce)
+export interface PartidaOrdenCompra {
+  N_mero_de_item__c: number;
+  Descripci_n__c: string;
+  Cantidad__c: number;
+  Unidad_de_medida__c: UnidadMedida;
+}
+
+// Item/Partida de una orden de compra (para manejo en el frontend)
 export interface ItemOrdenCompra {
   id: string; // ID temporal para manejo en el frontend
   descripcion: string;
@@ -63,12 +81,43 @@ export interface ItemOrdenCompra {
   subtotal?: number; // Opcional, puede calcularse después
 }
 
+// Payload para crear orden de compra
 export interface OrdenDeCompraCreatePayload {
+  orden: {
+    Participante__c: string;
+    Proyecto__c: string;
+    Fecha__c: string; // YYYY-MM-DD
+    Fecha_de_vencimiento__c?: string; // YYYY-MM-DD
+    Estado__c?: string;
+    Forma_de_pago__c?: FormaPago;
+    Medio_de_pago__c?: MedioPago;
+    Detalle__c?: string;
+    Observaciones__c?: string;
+    Referencia__c?: string;
+  };
+  partidas: PartidaOrdenCompra[];
+}
+
+// Orden de Compra de Salesforce (respuesta)
+export interface OrdenDeCompra {
+  Id?: string;
+  Participante__c?: string;
+  Proyecto__c?: string;
   Fecha__c?: string;
-  Detalle__c?: string; // JSON stringificado de los items
-  Total__c: number;
+  Fecha_de_vencimiento__c?: string;
   Estado__c?: string;
-  Participante__c: string; // Required - ID del proveedor
+  Forma_de_pago__c?: string;
+  Medio_de_pago__c?: string;
+  Detalle__c?: string;
+  Observaciones__c?: string;
+  Referencia__c?: string;
+  Total__c?: number;
+  Participante__r?: {
+    Name?: string;
+  };
+  Proyecto__r?: {
+    Name?: string;
+  };
 }
 
 export interface OrdenDeCompraUpdatePayload {
