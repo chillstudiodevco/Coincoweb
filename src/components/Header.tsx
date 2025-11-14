@@ -8,7 +8,7 @@ import supabaseClient from '@/lib/supabase/client';
 
 // Feature flags: control independiente de funcionalidades
 const ENABLE_LOGIN_PORTAL = true; // Portal de proveedores (login/dashboard)
-const ENABLE_THIRD_PARTY_REGISTRATION = false; // Registro de terceros
+const ENABLE_THIRD_PARTY_REGISTRATION = true; // Registro de terceros
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
