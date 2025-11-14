@@ -6,6 +6,15 @@ import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import type { Requisition, Invoice, OrdenDeCompra } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
+  // Configuración de secciones habilitadas/deshabilitadas
+  const enabledSections = {
+    dashboard: false,
+    requisitions: false,
+    purchaseOrders: true,
+    invoices: false,
+    profile: false,
+  };
+
   const [activeSection, setActiveSection] = useState('dashboard');
   const [showNewRequisitionModal, setShowNewRequisitionModal] = useState(false);
   const [showOrdenCompraModal, setShowOrdenCompraModal] = useState(false);
@@ -174,20 +183,44 @@ export default function ProviderDashboard() {
         return;
       }
 
-      // Obtener el salesforce_id del usuario actual
-      const metadata = (currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata;
-      const salesforceId = metadata?.salesforce_id as string | undefined;
+      // ✅ Buscar el ID del participante del usuario en el proyecto seleccionado
+      const proyecto = projects.find(p => String(p.Id) === String(data.proyectoId));
       
-      if (!salesforceId) {
+      if (!proyecto) {
+        console.error('❌ [Dashboard] Proyecto no encontrado:', data.proyectoId);
+        alert('Error: No se encontró el proyecto seleccionado.');
+        return;
+      }
+
+      // Obtener el salesforce_id de la cuenta del usuario
+      const metadata = (currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata;
+      const accountId = metadata?.salesforce_id as string | undefined;
+      
+      if (!accountId) {
         console.error('❌ [Dashboard] No se encontró salesforce_id del usuario');
         alert('Error: No se pudo identificar el usuario. Por favor, inicia sesión nuevamente.');
         return;
       }
 
+      // ✅ Buscar el participante del usuario en este proyecto
+      const participanteDelUsuario = proyecto.participants?.find(
+        p => String(p.Cuenta__c) === String(accountId)
+      );
+
+      if (!participanteDelUsuario || !participanteDelUsuario.Id) {
+        console.error('❌ [Dashboard] No se encontró participante del usuario en el proyecto');
+        console.error('Account ID:', accountId);
+        console.error('Participantes del proyecto:', proyecto.participants);
+        alert('Error: No se encontró tu participación en este proyecto. Por favor, contacta al administrador.');
+        return;
+      }
+
+      console.log('✅ [Dashboard] Participante encontrado:', participanteDelUsuario.Id, participanteDelUsuario.Name);
+
       // Crear payload con la nueva estructura: orden + partidas
       const payload = {
         orden: {
-          Participante__c: salesforceId, // ← Usuario que crea la orden
+          Participante__c: participanteDelUsuario.Id, // ✅ ID del participante en este proyecto
           Proveedor__c: data.proveedorId, // ← Proveedor seleccionado
           Proyecto__c: data.proyectoId,
           Fecha__c: new Date().toISOString().split('T')[0], // YYYY-MM-DD
@@ -469,56 +502,66 @@ export default function ProviderDashboard() {
           <div className="lg:w-1/4">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <nav className="space-y-2">
-                <button
-                  onClick={() => setActiveSection('dashboard')}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                    activeSection === 'dashboard' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  style={activeSection === 'dashboard' ? {backgroundColor: '#006935'} : {}}
-                >
-                  <i className="fas fa-tachometer-alt mr-3"></i>
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setActiveSection('requisitions')}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                    activeSection === 'requisitions' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  style={activeSection === 'requisitions' ? {backgroundColor: '#006935'} : {}}
-                >
-                  <i className="fas fa-clipboard-list mr-3"></i>
-                  Requisiciones
-                </button>
-                <button
-                  onClick={() => setActiveSection('purchase-orders')}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                    activeSection === 'purchase-orders' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  style={activeSection === 'purchase-orders' ? {backgroundColor: '#006935'} : {}}
-                >
-                  <i className="fas fa-shopping-cart mr-3"></i>
-                  Órdenes de Compra
-                </button>
-                <button
-                  onClick={() => setActiveSection('invoices')}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                    activeSection === 'invoices' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  style={activeSection === 'invoices' ? {backgroundColor: '#006935'} : {}}
-                >
-                  <i className="fas fa-file-invoice-dollar mr-3"></i>
-                  Facturas
-                </button>
-                <button
-                  onClick={() => setActiveSection('profile')}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                    activeSection === 'profile' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  style={activeSection === 'profile' ? {backgroundColor: '#006935'} : {}}
-                >
-                  <i className="fas fa-user-cog mr-3"></i>
-                  Mi Perfil
-                </button>
+                {enabledSections.dashboard && (
+                  <button
+                    onClick={() => setActiveSection('dashboard')}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
+                      activeSection === 'dashboard' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    style={activeSection === 'dashboard' ? {backgroundColor: '#006935'} : {}}
+                  >
+                    <i className="fas fa-tachometer-alt mr-3"></i>
+                    Dashboard
+                  </button>
+                )}
+                {enabledSections.requisitions && (
+                  <button
+                    onClick={() => setActiveSection('requisitions')}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
+                      activeSection === 'requisitions' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    style={activeSection === 'requisitions' ? {backgroundColor: '#006935'} : {}}
+                  >
+                    <i className="fas fa-clipboard-list mr-3"></i>
+                    Requisiciones
+                  </button>
+                )}
+                {enabledSections.purchaseOrders && (
+                  <button
+                    onClick={() => setActiveSection('purchase-orders')}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
+                      activeSection === 'purchase-orders' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    style={activeSection === 'purchase-orders' ? {backgroundColor: '#006935'} : {}}
+                  >
+                    <i className="fas fa-shopping-cart mr-3"></i>
+                    Órdenes de Compra
+                  </button>
+                )}
+                {enabledSections.invoices && (
+                  <button
+                    onClick={() => setActiveSection('invoices')}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
+                      activeSection === 'invoices' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    style={activeSection === 'invoices' ? {backgroundColor: '#006935'} : {}}
+                  >
+                    <i className="fas fa-file-invoice-dollar mr-3"></i>
+                    Facturas
+                  </button>
+                )}
+                {enabledSections.profile && (
+                  <button
+                    onClick={() => setActiveSection('profile')}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
+                      activeSection === 'profile' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                    style={activeSection === 'profile' ? {backgroundColor: '#006935'} : {}}
+                  >
+                    <i className="fas fa-user-cog mr-3"></i>
+                    Mi Perfil
+                  </button>
+                )}
               </nav>
             </div>
           </div>
