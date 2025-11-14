@@ -116,6 +116,7 @@ export interface ItemOrdenCompra {
 export interface OrdenDeCompraCreatePayload {
   orden: {
     Participante__c: string;
+    Proveedor__c: string;
     Proyecto__c: string;
     Fecha__c: string; // YYYY-MM-DD
     Fecha_de_vencimiento__c?: string; // YYYY-MM-DD
@@ -133,6 +134,7 @@ export interface OrdenDeCompraCreatePayload {
 export interface OrdenDeCompra {
   Id?: string;
   Participante__c?: string;
+  Proveedor__c?: string;
   Proyecto__c?: string;
   Fecha__c?: string;
   Fecha_de_vencimiento__c?: string;

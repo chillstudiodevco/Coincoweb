@@ -174,10 +174,21 @@ export default function ProviderDashboard() {
         return;
       }
 
+      // Obtener el salesforce_id del usuario actual
+      const metadata = (currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata;
+      const salesforceId = metadata?.salesforce_id as string | undefined;
+      
+      if (!salesforceId) {
+        console.error('❌ [Dashboard] No se encontró salesforce_id del usuario');
+        alert('Error: No se pudo identificar el usuario. Por favor, inicia sesión nuevamente.');
+        return;
+      }
+
       // Crear payload con la nueva estructura: orden + partidas
       const payload = {
         orden: {
-          Participante__c: data.proveedorId,
+          Participante__c: salesforceId, // ← Usuario que crea la orden
+          Proveedor__c: data.proveedorId, // ← Proveedor seleccionado
           Proyecto__c: data.proyectoId,
           Fecha__c: new Date().toISOString().split('T')[0], // YYYY-MM-DD
           Fecha_de_vencimiento__c: data.fechaVencimiento || undefined,
