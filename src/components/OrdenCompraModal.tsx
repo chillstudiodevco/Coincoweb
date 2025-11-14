@@ -9,6 +9,7 @@ interface OrdenCompraModalProps {
   onSubmit: (data: OrdenCompraFormData) => void;
   proveedores: Array<{ id: string; nombre: string }>;
   proyectos: Array<{ id: string; nombre: string }>;
+  onProyectoChange?: (proyectoId: string) => void;
 }
 
 export interface OrdenCompraFormData {
@@ -45,7 +46,7 @@ const MEDIOS_PAGO: MedioPago[] = [
   '(34) Efectivo',
 ];
 
-export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedores, proyectos }: OrdenCompraModalProps) {
+export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedores, proyectos, onProyectoChange }: OrdenCompraModalProps) {
   const [proveedorId, setProveedorId] = useState('');
   const [proyectoId, setProyectoId] = useState('');
   const [fechaVencimiento, setFechaVencimiento] = useState('');
@@ -169,23 +170,53 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white">Nueva Orden de Compra</h3>
+        <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <h3 className="text-lg sm:text-xl font-bold text-white">Nueva Orden de Compra</h3>
           <button
             onClick={handleClose}
             className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
           >
-            <i className="fas fa-times text-xl"></i>
+            <i className="fas fa-times text-lg sm:text-xl"></i>
           </button>
         </div>
 
         {/* Body - Scrollable */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
             
+            {/* Proyecto */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Proyecto <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={proyectoId}
+                onChange={(e) => {
+                  setProyectoId(e.target.value);
+                  onProyectoChange?.(e.target.value);
+                  setProveedorId(''); // Resetear proveedor cuando cambia el proyecto
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                style={{ maxHeight: '200px' }}
+                required
+              >
+                <option value="">Seleccione un proyecto</option>
+                {proyectos.map((proyecto) => (
+                  <option 
+                    key={proyecto.id} 
+                    value={proyecto.id}
+                    title={proyecto.nombre}
+                    className="py-2"
+                  >
+                    {proyecto.nombre.length > 80 ? proyecto.nombre.substring(0, 80) + '...' : proyecto.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Proveedor */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -194,40 +225,31 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
               <select
                 value={proveedorId}
                 onChange={(e) => setProveedorId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 required
+                disabled={!proyectoId}
               >
-                <option value="">Seleccione un proveedor</option>
+                <option value="">{!proyectoId ? 'Primero seleccione un proyecto' : 'Seleccione un proveedor'}</option>
                 {proveedores.map((proveedor) => (
-                  <option key={proveedor.id} value={proveedor.id}>
-                    {proveedor.nombre}
+                  <option 
+                    key={proveedor.id} 
+                    value={proveedor.id}
+                    title={proveedor.nombre}
+                  >
+                    {proveedor.nombre.length > 80 ? proveedor.nombre.substring(0, 80) + '...' : proveedor.nombre}
                   </option>
                 ))}
               </select>
-            </div>
-
-            {/* Proyecto */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Proyecto <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={proyectoId}
-                onChange={(e) => setProyectoId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                required
-              >
-                <option value="">Seleccione un proyecto</option>
-                {proyectos.map((proyecto) => (
-                  <option key={proyecto.id} value={proyecto.id}>
-                    {proyecto.nombre}
-                  </option>
-                ))}
-              </select>
+              {!proyectoId && (
+                <p className="text-xs text-gray-500 mt-1">
+                  <i className="fas fa-info-circle mr-1"></i>
+                  Seleccione un proyecto para ver los proveedores disponibles
+                </p>
+              )}
             </div>
 
             {/* Fila con 3 campos */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Fecha de Vencimiento */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -279,7 +301,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
             </div>
 
             {/* Detalle y Referencia */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Detalle */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -348,9 +370,9 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                       </button>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-2">
                       {/* Descripción */}
-                      <div className="md:col-span-6">
+                      <div className="sm:col-span-2 lg:col-span-6">
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Descripción
                         </label>
@@ -365,7 +387,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                       </div>
 
                       {/* Unidad de Medida */}
-                      <div className="md:col-span-3">
+                      <div className="lg:col-span-3">
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Unidad
                         </label>
@@ -385,7 +407,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                       </div>
 
                       {/* Cantidad */}
-                      <div className="md:col-span-3">
+                      <div className="lg:col-span-3">
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Cantidad
                         </label>
@@ -423,17 +445,17 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
           </div>
 
           {/* Footer - Fixed */}
-          <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end gap-3">
+          <div className="border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
             <button
               type="button"
               onClick={handleClose}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+              className="w-full sm:w-auto px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
             >
               <i className="fas fa-check"></i>
               Crear Orden

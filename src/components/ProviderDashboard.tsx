@@ -18,6 +18,9 @@ export default function ProviderDashboard() {
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>([]);
   const [loadingOrdenes, setLoadingOrdenes] = useState(false);
   
+  // Estado para el proyecto seleccionado en el modal de orden de compra
+  const [selectedProjectForOrden, setSelectedProjectForOrden] = useState<string>('');
+  
   // Projects returned by Salesforce -> account.projects
   type Participant = {
     Descripci_n_del_servicio__c?: string | null;
@@ -25,10 +28,12 @@ export default function ProviderDashboard() {
     Cuenta__c?: string | null;
     Name?: string | null;
     Id?: string | null;
+    Tipo_de_tercero__c?: string | null;
   };
 
   type Project = {
     participants?: Participant[];
+    materialProviders?: Participant[];
     Valor_del_contrato__c?: number | null;
     Valor_total_del_contrato__c?: number | null;
     Objeto_del_contrato__c?: string | null;
@@ -82,22 +87,18 @@ export default function ProviderDashboard() {
     return found?.participants ?? [];
   };
 
-  // Obtener lista de todos los proveedores (participantes únicos de todos los proyectos)
-  const getAllProveedores = useCallback(() => {
-    const proveedoresMap = new Map<string, { id: string; nombre: string }>();
+  // Obtener proveedores de materiales de un proyecto específico
+  const getProveedoresByProject = useCallback((projectId: string) => {
+    const project = projects.find(p => String(p.Id) === String(projectId));
     
-    projects.forEach(project => {
-      project.participants?.forEach(participant => {
-        const id = participant.Id || participant.Name || '';
-        const nombre = participant.Descripci_n_del_servicio__c || participant.Name || 'Sin nombre';
-        
-        if (id && !proveedoresMap.has(id)) {
-          proveedoresMap.set(id, { id, nombre });
-        }
-      });
-    });
+    if (!project || !project.materialProviders) {
+      return [];
+    }
     
-    return Array.from(proveedoresMap.values());
+    return project.materialProviders.map(proveedor => ({
+      id: proveedor.Id || proveedor.Name || '',
+      nombre: proveedor.CuentaName || proveedor.Descripci_n_del_servicio__c || proveedor.Name || 'Sin nombre'
+    }));
   }, [projects]);
 
   // Data placeholders (replaced previous mock data). Real data should come from Salesforce/API.
@@ -436,7 +437,7 @@ export default function ProviderDashboard() {
                 <i className="fas fa-user-shield text-white text-xl"></i>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">Portal de Proveedores</h1>
+                <h1 className="text-2xl font-bold text-gray-800">Portal COINCO</h1>
                 <p className="text-gray-600">Bienvenido, {displayCompany()}</p>
               </div>
             </div>
@@ -1047,11 +1048,12 @@ export default function ProviderDashboard() {
         isOpen={showOrdenCompraModal}
         onClose={() => setShowOrdenCompraModal(false)}
         onSubmit={handleCreateOrdenCompra}
-        proveedores={getAllProveedores()}
+        proveedores={selectedProjectForOrden ? getProveedoresByProject(selectedProjectForOrden) : []}
         proyectos={projects.map(p => ({
           id: p.Id || '',
           nombre: p.Objeto_del_contrato__c || p.Name || 'Sin nombre'
         }))}
+        onProyectoChange={(proyectoId) => setSelectedProjectForOrden(proyectoId)}
       />
     </div>
   );
