@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     const sfEndpoint = `${salesforceUrl}/services/apexrest/portal/dashboard/account?id=${encodeURIComponent(
       salesforceId
-    )}&includeProjects=true`;
+    )}&includeProjects=true&includeMaterialProviders=true`;
     
     console.log('📡 [API] Calling Salesforce endpoint:', sfEndpoint);
 
