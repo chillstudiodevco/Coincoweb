@@ -119,16 +119,16 @@ export default function ProviderDashboard() {
     if (!currentUser || typeof currentUser !== 'object') return;
     
     const metadata = (currentUser as { user_metadata?: Record<string, unknown> }).user_metadata;
-    const salesforceId = metadata?.salesforce_id as string | undefined;
+    const accountId = metadata?.salesforce_id as string | undefined;
     
-    if (!salesforceId) {
-      console.warn('⚠️ [Dashboard] No se encontró salesforce_id en user_metadata');
+    if (!accountId) {
+      console.warn('⚠️ [Dashboard] No se encontró salesforce_id (accountId) en user_metadata');
       return;
     }
 
     try {
       setLoadingOrdenes(true);
-      console.log('🔄 [Dashboard] Cargando órdenes para participante:', salesforceId);
+      console.log('🔄 [Dashboard] Cargando órdenes para account:', accountId);
 
       // Obtener token de sesión
       const { data: { session } } = await supabaseClient.auth.getSession();
@@ -137,9 +137,9 @@ export default function ProviderDashboard() {
         return;
       }
 
-      // Llamar a la API con el participanteId (salesforce_id del usuario)
+      // ✅ Llamar a la API con accountId (busca todos los participantes automáticamente)
       const response = await fetch(
-        `/api/salesforce/ordenes-compra?participanteId=${salesforceId}&limit=100`,
+        `/api/salesforce/ordenes-compra?accountId=${accountId}&includePartidas=true&limit=100`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -155,7 +155,7 @@ export default function ProviderDashboard() {
       }
 
       const loadedOrdenes = result.data?.ordenes || [];
-      console.log(`✅ [Dashboard] ${loadedOrdenes.length} órdenes cargadas`);
+      console.log(`✅ [Dashboard] ${loadedOrdenes.length} órdenes cargadas de todos los proyectos`);
       setOrdenes(loadedOrdenes);
 
     } catch (error) {

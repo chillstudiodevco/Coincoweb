@@ -9,7 +9,9 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  * GET /api/salesforce/ordenes-compra
  * Query params:
  *   - id: Get single orden by Id
- *   - participanteId: Get ordenes by participante (required if no id)
+ *   - accountId: Get ordenes by account (busca todos los participantes del account)
+ *   - participanteId: Get ordenes by participante específico
+ *   - includePartidas: true para incluir items/partidas de la orden
  *   - limit: Max records (default 100, max 500)
  *   - offset: Pagination offset (default 0)
  */
@@ -21,16 +23,18 @@ export async function GET(request: NextRequest) {
     // 2. Obtener parámetros de query
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    const accountId = searchParams.get('accountId');
     const participanteId = searchParams.get('participanteId');
+    const includePartidas = searchParams.get('includePartidas');
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');
 
-    // 3. Validar parámetros
-    if (!id && !participanteId) {
+    // 3. Validar parámetros (al menos uno debe estar presente)
+    if (!id && !accountId && !participanteId) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Se requiere "id" o "participanteId" como parámetro' 
+          error: 'Se requiere "id", "accountId" o "participanteId" como parámetro' 
         },
         { status: 400 }
       );
@@ -40,15 +44,21 @@ export async function GET(request: NextRequest) {
     const salesforceToken = await getValidToken();
 
     // 5. Construir URL del endpoint de Salesforce
-    let apexUrl = `${SALESFORCE_INSTANCE_URL}/services/apexrest/portal/ordenes`;
+    const params = new URLSearchParams();
     
     if (id) {
-      apexUrl += `?id=${encodeURIComponent(id)}`;
+      params.set('id', id);
+    } else if (accountId) {
+      params.set('accountId', accountId);
     } else if (participanteId) {
-      apexUrl += `?participanteId=${encodeURIComponent(participanteId)}`;
-      if (limit) apexUrl += `&limit=${encodeURIComponent(limit)}`;
-      if (offset) apexUrl += `&offset=${encodeURIComponent(offset)}`;
+      params.set('participanteId', participanteId);
     }
+    
+    if (includePartidas) params.set('includePartidas', includePartidas);
+    if (limit) params.set('limit', limit);
+    if (offset) params.set('offset', offset);
+
+    const apexUrl = `${SALESFORCE_INSTANCE_URL}/services/apexrest/portal/ordenes?${params.toString()}`;
 
     console.log('[Ordenes Compra GET] Calling Salesforce:', apexUrl);
 
