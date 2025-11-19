@@ -744,13 +744,24 @@ export default function ProviderDashboard() {
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h2 className="text-3xl font-bold text-gray-800">Órdenes de Compra</h2>
-                  <button
-                    onClick={() => setShowOrdenCompraModal(true)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2"
-                  >
-                    <i className="fas fa-plus"></i>
-                    Nueva Orden
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={fetchOrdenes}
+                      disabled={loadingOrdenes}
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Actualizar órdenes"
+                    >
+                      <i className={`fas fa-sync-alt ${loadingOrdenes ? 'animate-spin' : ''}`}></i>
+                      Actualizar
+                    </button>
+                    <button
+                      onClick={() => setShowOrdenCompraModal(true)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2"
+                    >
+                      <i className="fas fa-plus"></i>
+                      Nueva Orden
+                    </button>
+                  </div>
                 </div>
                 
                 {loadingOrdenes ? (
