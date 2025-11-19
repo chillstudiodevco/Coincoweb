@@ -8,7 +8,7 @@ import type { Requisition, Invoice, OrdenDeCompra } from '@/types/dashboard';
 export default function ProviderDashboard() {
   // Configuración de secciones habilitadas/deshabilitadas
   const enabledSections = {
-    dashboard: false,
+    dashboard: true,
     requisitions: false,
     purchaseOrders: true,
     invoices: false,
@@ -573,69 +573,23 @@ export default function ProviderDashboard() {
                 <h2 className="text-3xl font-bold text-gray-800">Resumen General</h2>
                 
                 {/* Estadísticas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-gray-600 text-sm">Requisiciones Activas</p>
-                        <p className="text-3xl font-bold text-blue-600">{requisitions.filter(r => r.status === 'pending').length}</p>
-                      </div>
-                      <i className="fas fa-clipboard-list text-blue-500 text-2xl"></i>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-600 text-sm">Órdenes de Compra</p>
                         <p className="text-3xl font-bold text-green-600">{ordenes.length}</p>
                       </div>
-                      <i className="fas fa-check-circle text-green-500 text-2xl"></i>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-gray-600 text-sm">Facturas Pendientes</p>
-                        <p className="text-3xl font-bold text-yellow-600">{invoices.filter(i => i.status === 'pending').length}</p>
-                      </div>
-                      <i className="fas fa-clock text-yellow-500 text-2xl"></i>
+                      <i className="fas fa-shopping-cart text-green-500 text-2xl"></i>
                     </div>
                   </div>
                   <div className="bg-white rounded-xl shadow-lg p-6 border-l-4" style={{borderColor: '#006935'}}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-gray-600 text-sm">Total Facturado</p>
-                        <p className="text-2xl font-bold" style={{color: '#006935'}}>{formatCurrency(invoices.reduce((sum, inv) => sum + inv.amount, 0))}</p>
+                        <p className="text-gray-600 text-sm">Proyectos Asociados</p>
+                        <p className="text-3xl font-bold" style={{color: '#006935'}}>{projects.length}</p>
                       </div>
-                      <i className="fas fa-dollar-sign text-2xl" style={{color: '#006935'}}></i>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actividad Reciente */}
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">Actividad Reciente</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-4 p-4 bg-green-50 rounded-lg">
-                      <i className="fas fa-check-circle text-green-500 text-xl"></i>
-                      <div>
-                        <p className="font-medium text-gray-800">Requisición REQ-001 aprobada</p>
-                        <p className="text-gray-600 text-sm">Hace 2 horas</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
-                      <i className="fas fa-shopping-cart text-blue-500 text-xl"></i>
-                      <div>
-                        <p className="font-medium text-gray-800">Nueva orden de compra OC-2025-002 creada</p>
-                        <p className="text-gray-600 text-sm">Hace 1 día</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4 p-4 bg-yellow-50 rounded-lg">
-                      <i className="fas fa-file-invoice text-yellow-500 text-xl"></i>
-                      <div>
-                        <p className="font-medium text-gray-800">Factura FC-2025-002 pendiente de pago</p>
-                        <p className="text-gray-600 text-sm">Hace 3 días</p>
-                      </div>
+                      <i className="fas fa-briefcase text-2xl" style={{color: '#006935'}}></i>
                     </div>
                   </div>
                 </div>
@@ -893,56 +847,9 @@ export default function ProviderDashboard() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-bold text-gray-800 mb-4">Información de Contacto</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-gray-600 text-sm">NIT</p>
-                          <p className="font-medium">900.123.456-7</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Teléfono</p>
-                          <p className="font-medium">(+57) 301 234 5678</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Email</p>
-                          <p className="font-medium">contacto@construccionesabc.com</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Dirección</p>
-                          <p className="font-medium">Calle 123 #45-67, Bogotá, Colombia</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-bold text-gray-800 mb-4">Información Bancaria</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-gray-600 text-sm">Banco</p>
-                          <p className="font-medium">Banco de Bogotá</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Tipo de Cuenta</p>
-                          <p className="font-medium">Cuenta Corriente</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600 text-sm">Número de Cuenta</p>
-                          <p className="font-medium">****-****-****-1234</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 pt-6 border-t">
-                    <button 
-                      className="text-white px-6 py-3 rounded-lg transition-colors duration-300 cursor-pointer hover:opacity-90"
-                      style={{backgroundColor: '#006935'}}
-                    >
-                      <i className="fas fa-edit mr-2"></i>
-                      Editar Perfil
-                    </button>
+                  <div className="text-center py-8 text-gray-500">
+                    <i className="fas fa-info-circle text-4xl mb-4"></i>
+                    <p>Información de perfil próximamente disponible</p>
                   </div>
                 </div>
               </div>
