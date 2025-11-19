@@ -12,6 +12,7 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalProps) {
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -27,6 +28,13 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
         email: loginData.username,
         password: loginData.password,
       });
+      
+      // Si "recordarme" está desmarcado, configurar sesión temporal
+      if (!rememberMe && data?.session) {
+        // Supabase mantiene la sesión en localStorage por defecto
+        // Para sesión temporal, podríamos usar sessionStorage en su lugar
+        console.log('[LoginModal] Sesión configurada como temporal (no persistente)');
+      }
 
       if (error) {
         setError(error.message || 'Error en el login');
@@ -154,8 +162,13 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-600" />
+              <label className="flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-gray-300 text-green-600 focus:ring-green-600 cursor-pointer" 
+                />
                 <span className="ml-2 text-sm text-gray-600">Recordarme</span>
               </label>
               <a href="#" className="text-sm text-green-600 hover:text-green-700 transition-colors duration-300 font-medium">

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LoginModal from '@/components/LoginModal';
 import supabaseClient from '@/lib/supabase/client';
 
@@ -14,6 +14,38 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState<string>('Proveedor');
+
+  // Verificar sesión existente al cargar el componente
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        
+        if (session) {
+          setIsLoggedIn(true);
+          
+          // Intentar obtener nombre del usuario desde localStorage o session
+          try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+              const user = JSON.parse(storedUser);
+              const name = user?.salesforce?.account?.Name || user?.email || 'Proveedor';
+              setUserName(name);
+            } else if (session.user?.email) {
+              setUserName(session.user.email.split('@')[0]);
+            }
+          } catch {
+            // Si falla, usar valor por defecto
+          }
+        }
+      } catch (error) {
+        console.error('[Header] Error verificando sesión:', error);
+      }
+    };
+
+    checkSession();
+  }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
@@ -25,11 +57,12 @@ export default function Header() {
 
   // login handled by LoginModal component
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggedIn(false);
+    setUserName('Proveedor');
     try { localStorage.removeItem('user'); } catch {}
     // Cerrar sesión de Supabase
-    supabaseClient.auth.signOut().catch(() => {});
+    await supabaseClient.auth.signOut().catch(() => {});
     window.location.href = '/';
   };
 
@@ -85,7 +118,13 @@ export default function Header() {
             <div className="hidden lg:flex">
               {isLoggedIn ? (
                 <div className="flex items-center space-x-4">
-                  <span className="text-gray-700">Bienvenido, Proveedor</span>
+                  <a 
+                    href="/dashboard"
+                    className="text-gray-700 hover:text-green-600 transition-colors duration-300 flex items-center cursor-pointer"
+                  >
+                    <i className="fas fa-user-circle mr-2"></i>
+                    <span className="font-medium">{userName}</span>
+                  </a>
                   <button
                     onClick={handleLogout}
                     className="text-red-600 hover:text-red-700 transition-colors duration-300 flex items-center cursor-pointer"
@@ -169,6 +208,18 @@ export default function Header() {
           onClose={closeModal}
           onSuccess={(user) => {
             setIsLoggedIn(true);
+            
+            // Extraer nombre del usuario
+            try {
+              const userData = user as Record<string, unknown>;
+              const sf = userData?.salesforce as Record<string, unknown> | undefined;
+              const account = sf?.account as Record<string, unknown> | undefined;
+              const name = (account?.Name as string) || (userData?.email as string) || 'Proveedor';
+              setUserName(name);
+            } catch {
+              setUserName('Proveedor');
+            }
+            
             // persist user and redirect to dashboard like previous behavior
             try { localStorage.setItem('user', JSON.stringify(user)); } catch {};
             window.location.href = '/dashboard';
