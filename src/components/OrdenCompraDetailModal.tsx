@@ -238,11 +238,11 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
               )}
 
               {/* Partidas/Items */}
-              {orden.Partidas_de_ordenes_de_compra__r && orden.Partidas_de_ordenes_de_compra__r.length > 0 ? (
+              {orden.Partidas_de_ordenes_de_compra__r?.records && orden.Partidas_de_ordenes_de_compra__r.records.length > 0 ? (
                 <div>
                   <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <i className="fas fa-list text-green-600"></i>
-                    Items de la Orden ({orden.Partidas_de_ordenes_de_compra__r.length})
+                    Items de la Orden ({orden.Partidas_de_ordenes_de_compra__r.records.length})
                   </h4>
                   
                   <div className="overflow-x-auto">
@@ -258,7 +258,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {orden.Partidas_de_ordenes_de_compra__r.map((partida) => (
+                        {orden.Partidas_de_ordenes_de_compra__r.records.map((partida) => (
                           <tr key={partida.Id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 text-sm font-medium text-gray-900">
                               {partida.N_mero_de_item__c}

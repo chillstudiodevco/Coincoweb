@@ -86,7 +86,11 @@ export interface OrdenDeCompra {
   };
   Total_abonado__c?: number;
   partidas?: PartidaSalesforce[]; // Solo viene si includePartidas=true
-  Partidas_de_ordenes_de_compra__r?: PartidaSalesforce[]; // Relación desde Salesforce
+  Partidas_de_ordenes_de_compra__r?: {
+    totalSize?: number;
+    done?: boolean;
+    records?: PartidaSalesforce[];
+  }; // Relación desde Salesforce con estructura de query
 }
 
 export interface OrdenDeCompraUpdatePayload {
