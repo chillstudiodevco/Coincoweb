@@ -45,6 +45,8 @@ export interface PartidaSalesforce {
   Cantidad__c?: number;
   Unidad_de_medida__c?: UnidadMedida;
   Orden_de_compra__c?: string;
+  Valor_unitario__c?: number;
+  Valor_total__c?: number;
 }
 
 // Orden de Compra de Salesforce (respuesta completa)
@@ -52,6 +54,7 @@ export interface OrdenDeCompra {
   Id?: string;
   Name?: string;
   Participante__c?: string;
+  Proveedor__c?: string;
   Proyecto__c?: string;
   Fecha__c?: string;
   Fecha_de_vencimiento__c?: string;
@@ -67,12 +70,23 @@ export interface OrdenDeCompra {
     Name?: string;
     Descripci_n_del_servicio__c?: string;
   };
+  Proveedor__r?: {
+    Id?: string;
+    Name?: string;
+    Cuenta__c?: string;
+    Cuenta__r?: {
+      Id?: string;
+      Name?: string;
+    };
+  };
   Proyecto__r?: {
     Id?: string;
     Name?: string;
     Objeto_del_contrato__c?: string;
   };
+  Total_abonado__c?: number;
   partidas?: PartidaSalesforce[]; // Solo viene si includePartidas=true
+  Partidas_de_ordenes_de_compra__r?: PartidaSalesforce[]; // Relación desde Salesforce
 }
 
 export interface OrdenDeCompraUpdatePayload {
@@ -128,21 +142,4 @@ export interface OrdenDeCompraCreatePayload {
     Referencia__c?: string;
   };
   partidas: PartidaOrdenCompra[];
-}
-
-// Orden de Compra de Salesforce (respuesta)
-export interface OrdenDeCompra {
-  Id?: string;
-  Participante__c?: string;
-  Proveedor__c?: string;
-  Proyecto__c?: string;
-  Fecha__c?: string;
-  Fecha_de_vencimiento__c?: string;
-  Estado__c?: string;
-  Forma_de_pago__c?: string;
-  Medio_de_pago__c?: string;
-  Detalle__c?: string;
-  Observaciones__c?: string;
-  Referencia__c?: string;
-  Total__c?: number;
 }

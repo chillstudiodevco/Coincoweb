@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import supabaseClient from '@/lib/supabase/client';
 import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
+import OrdenCompraDetailModal from './OrdenCompraDetailModal';
 import type { Requisition, Invoice, OrdenDeCompra } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
@@ -18,6 +19,8 @@ export default function ProviderDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [showNewRequisitionModal, setShowNewRequisitionModal] = useState(false);
   const [showOrdenCompraModal, setShowOrdenCompraModal] = useState(false);
+  const [showOrdenDetailModal, setShowOrdenDetailModal] = useState(false);
+  const [selectedOrdenId, setSelectedOrdenId] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<unknown | null>(null);
   const [salesforceData, setSalesforceData] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
@@ -170,6 +173,12 @@ export default function ProviderDashboard() {
     // Aquí se enviaría la requisición
     setShowNewRequisitionModal(false);
     setNewRequisition({ title: '', description: '', quantity: 1, unitPrice: 0, project: '', service: '' });
+  };
+
+  const handleOpenOrdenDetail = (ordenId: string | undefined) => {
+    if (!ordenId) return;
+    setSelectedOrdenId(ordenId);
+    setShowOrdenDetailModal(true);
   };
 
   const handleCreateOrdenCompra = async (data: OrdenCompraFormData) => {
@@ -788,71 +797,78 @@ export default function ProviderDashboard() {
                 ) : (
                   <div className="grid gap-6">
                     {ordenes.map((orden) => (
-                      <div key={orden.Id} className="bg-white rounded-xl shadow-lg p-6">
+                      <div 
+                        key={orden.Id} 
+                        className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 cursor-pointer border border-transparent hover:border-green-200"
+                        onClick={() => handleOpenOrdenDetail(orden.Id)}
+                      >
                         <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-800">{orden.Name || 'Sin número'}</h3>
-                            <p className="text-gray-600">
-                              Proveedor: {orden.Participante__r?.Name || 'N/A'}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-xl font-bold text-gray-800">{orden.Name || 'Sin número'}</h3>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(orden.Estado__c || 'pending')}`}>
+                                {orden.Estado__c || 'Pendiente'}
+                              </span>
+                            </div>
+                            <p className="text-gray-600 text-sm">
+                              <i className="fas fa-user-tie mr-2"></i>
+                              Participante: {orden.Participante__r?.Name || 'N/A'}
                             </p>
+                            {orden.Proveedor__r?.Cuenta__r?.Name && (
+                              <p className="text-gray-600 text-sm mt-1">
+                                <i className="fas fa-store mr-2"></i>
+                                Proveedor: {orden.Proveedor__r.Cuenta__r.Name}
+                              </p>
+                            )}
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(orden.Estado__c || 'pending')}`}>
-                            {orden.Estado__c || 'Pendiente'}
-                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenOrdenDetail(orden.Id);
+                            }}
+                            className="text-green-600 hover:text-green-700 p-2 rounded-full hover:bg-green-50 transition-colors"
+                            title="Ver detalle"
+                          >
+                            <i className="fas fa-eye text-xl"></i>
+                          </button>
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                           <div>
-                            <p className="text-gray-600 text-sm">Fecha</p>
-                            <p className="font-bold">{orden.Fecha__c ? formatDate(orden.Fecha__c) : 'N/A'}</p>
+                            <p className="text-gray-600 text-xs font-semibold uppercase">Fecha</p>
+                            <p className="font-bold text-sm">{orden.Fecha__c ? formatDate(orden.Fecha__c) : 'N/A'}</p>
                           </div>
                           {orden.Fecha_de_vencimiento__c && (
                             <div>
-                              <p className="text-gray-600 text-sm">Fecha de Vencimiento</p>
-                              <p className="font-bold">{formatDate(orden.Fecha_de_vencimiento__c)}</p>
+                              <p className="text-gray-600 text-xs font-semibold uppercase">Vencimiento</p>
+                              <p className="font-bold text-sm">{formatDate(orden.Fecha_de_vencimiento__c)}</p>
                             </div>
                           )}
                           {orden.Total__c && (
-                            <div>
-                              <p className="text-gray-600 text-sm">Monto Total</p>
-                              <p className="font-bold text-lg">{formatCurrency(orden.Total__c)}</p>
+                            <div className="col-span-2">
+                              <p className="text-gray-600 text-xs font-semibold uppercase">Monto Total</p>
+                              <p className="font-bold text-lg" style={{ color: '#006935' }}>{formatCurrency(orden.Total__c)}</p>
                             </div>
                           )}
                         </div>
                         
-                        {(orden.Forma_de_pago__c || orden.Medio_de_pago__c) && (
-                          <div className="mb-4 flex gap-4">
-                            {orden.Forma_de_pago__c && (
-                              <div>
-                                <p className="text-gray-600 text-sm">Forma de Pago</p>
-                                <p className="font-medium">{orden.Forma_de_pago__c}</p>
-                              </div>
-                            )}
-                            {orden.Medio_de_pago__c && (
-                              <div>
-                                <p className="text-gray-600 text-sm">Medio de Pago</p>
-                                <p className="font-medium">{orden.Medio_de_pago__c}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {orden.Observaciones__c && (
-                          <div className="mb-4">
-                            <p className="text-gray-600 text-sm">Observaciones</p>
-                            <p className="text-gray-800">{orden.Observaciones__c}</p>
-                          </div>
-                        )}
-                        
-                        <div className="border-t pt-4">
-                          <p className="text-gray-600 text-sm">
-                            Proyecto: <span className="font-medium">{orden.Proyecto__r?.Name || 'N/A'}</span>
-                          </p>
-                          {orden.Referencia__c && (
+                        <div className="border-t pt-4 flex items-center justify-between">
+                          <div className="flex-1">
                             <p className="text-gray-600 text-sm">
-                              Referencia: <span className="font-medium">{orden.Referencia__c}</span>
+                              <i className="fas fa-project-diagram mr-2"></i>
+                              <span className="font-medium">{orden.Proyecto__r?.Name || 'N/A'}</span>
                             </p>
-                          )}
+                            {orden.Referencia__c && (
+                              <p className="text-gray-600 text-xs mt-1">
+                                <i className="fas fa-tag mr-2"></i>
+                                Ref: {orden.Referencia__c}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right text-xs text-gray-500">
+                            <i className="fas fa-hand-pointer mr-1"></i>
+                            Click para ver detalle
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1096,6 +1112,16 @@ export default function ProviderDashboard() {
           nombre: p.Objeto_del_contrato__c || p.Name || 'Sin nombre'
         }))}
         onProyectoChange={(proyectoId) => setSelectedProjectForOrden(proyectoId)}
+      />
+
+      {/* Modal de Detalle de Orden de Compra */}
+      <OrdenCompraDetailModal
+        isOpen={showOrdenDetailModal}
+        onClose={() => {
+          setShowOrdenDetailModal(false);
+          setSelectedOrdenId('');
+        }}
+        ordenId={selectedOrdenId}
       />
     </div>
   );
