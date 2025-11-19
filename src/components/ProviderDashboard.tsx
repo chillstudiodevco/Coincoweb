@@ -458,8 +458,58 @@ export default function ProviderDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto mb-4" style={{borderColor: '#006935'}}></div>
-          <p className="text-gray-600">Verificando acceso...</p>
+          <div className="relative mb-8">
+            {/* Spinner exterior */}
+            <div 
+              className="animate-spin rounded-full h-20 w-20 border-4 border-gray-200 mx-auto"
+              style={{ borderTopColor: '#006935' }}
+            ></div>
+            {/* Spinner interior (rotación inversa) */}
+            <div 
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <div 
+                className="animate-spin rounded-full h-12 w-12 border-4 border-transparent"
+                style={{ 
+                  borderTopColor: '#4CAF50',
+                  animationDirection: 'reverse',
+                  animationDuration: '1s'
+                }}
+              ></div>
+            </div>
+            {/* Icono en el centro */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <i className="fas fa-shield-alt text-2xl" style={{ color: '#006935' }}></i>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xl font-bold" style={{ color: '#006935' }}>Portal COINCO</p>
+            <p className="text-gray-600">Verificando acceso...</p>
+          </div>
+          {/* Puntos animados */}
+          <div className="flex justify-center items-center space-x-2 mt-4">
+            <div 
+              className="w-2 h-2 rounded-full animate-bounce"
+              style={{ 
+                backgroundColor: '#006935',
+                animationDelay: '0ms'
+              }}
+            ></div>
+            <div 
+              className="w-2 h-2 rounded-full animate-bounce"
+              style={{ 
+                backgroundColor: '#006935',
+                animationDelay: '150ms'
+              }}
+            ></div>
+            <div 
+              className="w-2 h-2 rounded-full animate-bounce"
+              style={{ 
+                backgroundColor: '#006935',
+                animationDelay: '300ms'
+              }}
+            ></div>
+          </div>
         </div>
       </div>
     );
@@ -695,8 +745,39 @@ export default function ProviderDashboard() {
                 </div>
                 
                 {loadingOrdenes ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600">Cargando órdenes de compra...</p>
+                  <div className="text-center py-12 bg-white rounded-xl shadow-lg">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="relative">
+                        {/* Spinner principal */}
+                        <div 
+                          className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"
+                          style={{ borderTopColor: '#006935' }}
+                        ></div>
+                        {/* Icono en el centro */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <i className="fas fa-shopping-cart text-2xl" style={{ color: '#006935' }}></i>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-lg font-semibold" style={{ color: '#006935' }}>
+                          Cargando órdenes de compra
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Por favor espera un momento...
+                        </p>
+                      </div>
+                      {/* Barra de progreso animada */}
+                      <div className="w-64 h-1 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full animate-pulse"
+                          style={{ 
+                            width: '60%',
+                            backgroundColor: '#006935',
+                            animation: 'loading-bar 1.5s ease-in-out infinite'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                 ) : ordenes.length === 0 ? (
                   <div className="text-center py-12 bg-white rounded-xl shadow-lg">
