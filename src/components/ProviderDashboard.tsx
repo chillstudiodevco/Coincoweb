@@ -233,13 +233,9 @@ export default function ProviderDashboard() {
           Proveedor__c: data.proveedorId, // ← Proveedor seleccionado
           Proyecto__c: data.proyectoId,
           Fecha__c: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-          Fecha_de_vencimiento__c: data.fechaVencimiento || undefined,
           Estado__c: 'Requisición generada',
-          Forma_de_pago__c: data.formaPago || undefined,
-          Medio_de_pago__c: data.medioPago || undefined,
           Detalle__c: data.detalle || undefined,
           Observaciones__c: data.observaciones || undefined,
-          Referencia__c: data.referencia || undefined,
         },
         partidas: data.items.map((item, index) => ({
           N_mero_de_item__c: index + 1,
