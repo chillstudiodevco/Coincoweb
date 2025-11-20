@@ -85,6 +85,7 @@ export interface OrdenDeCompra {
     Objeto_del_contrato__c?: string;
   };
   Total_abonado__c?: number;
+  Archivo_cuenta_de_cobro__c?: string; // URL del archivo de cuenta de cobro del proveedor
   partidas?: PartidaSalesforce[]; // Solo viene si includePartidas=true
   Partidas_de_ordenes_de_compra__r?: {
     totalSize?: number;

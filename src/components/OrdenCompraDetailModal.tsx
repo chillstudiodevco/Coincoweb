@@ -14,6 +14,52 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
   const [orden, setOrden] = useState<OrdenDeCompra | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [approving, setApproving] = useState(false);
+
+  const handleAprobarOrden = async () => {
+    if (!orden?.Id) return;
+
+    try {
+      setApproving(true);
+      setError(null);
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        setError('Sesión expirada');
+        return;
+      }
+
+      const response = await fetch('/api/salesforce/ordenes-compra', {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Id: orden.Id,
+          Estado__c: 'Orden de compra en tramite',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setError(result.error || 'Error al aprobar la orden');
+        return;
+      }
+
+      // Actualizar el estado local de la orden
+      setOrden(prev => prev ? { ...prev, Estado__c: 'Orden de compra en tramite' } : null);
+      
+      // Mostrar mensaje de éxito (opcional)
+      alert('Orden aprobada exitosamente');
+    } catch (err) {
+      console.error('Error approving orden:', err);
+      setError('Error al aprobar la orden');
+    } finally {
+      setApproving(false);
+    }
+  };
 
   const fetchOrdenDetail = async () => {
     try {
@@ -237,6 +283,51 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                 </div>
               )}
 
+              {/* Archivo de Cuenta de Cobro - Solo cuando está pendiente de aprobación */}
+              {orden.Estado__c === 'Orden de compra para aprobación contratista' && orden.Archivo_cuenta_de_cobro__c && (
+                <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h5 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <i className="fas fa-file-invoice-dollar text-blue-600"></i>
+                        Cuenta de Cobro del Proveedor
+                      </h5>
+                      <p className="text-sm text-gray-600 mb-4">
+                        El proveedor ha enviado la cuenta de cobro para esta orden. Por favor revise el documento antes de aprobar.
+                      </p>
+                      <div className="flex gap-3">
+                        <a
+                          href={orden.Archivo_cuenta_de_cobro__c}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+                        >
+                          <i className="fas fa-external-link-alt"></i>
+                          Ver Documento
+                        </a>
+                        <button
+                          onClick={handleAprobarOrden}
+                          disabled={approving}
+                          className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {approving ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                              Aprobando...
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-check-circle"></i>
+                              Aprobar Orden
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Partidas/Items */}
               {orden.Partidas_de_ordenes_de_compra__r?.records && orden.Partidas_de_ordenes_de_compra__r.records.length > 0 ? (
                 <div>
@@ -323,14 +414,22 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-          >
-            <i className="fas fa-times mr-2"></i>
-            Cerrar
-          </button>
+        <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-between items-center">
+          {orden?.Estado__c === 'Orden de compra para aprobación contratista' && (
+            <div className="flex items-center gap-2 text-sm text-orange-700 bg-orange-100 px-4 py-2 rounded-lg">
+              <i className="fas fa-clock"></i>
+              <span className="font-semibold">Pendiente de aprobación</span>
+            </div>
+          )}
+          <div className="flex gap-3 ml-auto">
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+            >
+              <i className="fas fa-times mr-2"></i>
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>
