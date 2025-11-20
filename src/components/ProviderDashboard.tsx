@@ -48,7 +48,7 @@ export default function ProviderDashboard() {
     Name?: string | null;
     Id?: string | null;
     Tipo_de_tercero__c?: string | null;
-    Valor_del_contrato__c?: number | null;
+    Valor_contrato__c?: number | null;
   };
 
   type Project = {
@@ -706,7 +706,7 @@ export default function ProviderDashboard() {
                                 <div className="text-left sm:text-right">
                                   <p className="text-xs text-gray-600 font-semibold uppercase">Mi Contrato</p>
                                   <p className="text-lg font-bold" style={{ color: '#006935' }}>
-                                    {myParticipant?.Valor_del_contrato__c ? formatCurrency(myParticipant.Valor_del_contrato__c) : '-'}
+                                    {myParticipant?.Valor_contrato__c ? formatCurrency(myParticipant.Valor_contrato__c) : '-'}
                                   </p>
                                 </div>
                               </div>

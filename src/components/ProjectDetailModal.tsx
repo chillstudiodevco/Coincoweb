@@ -11,7 +11,7 @@ interface Participant {
   Name?: string | null;
   Id?: string | null;
   Tipo_de_tercero__c?: string | null;
-  Valor_del_contrato__c?: number | null;
+  Valor_contrato__c?: number | null;
 }
 
 interface Project {
@@ -166,8 +166,8 @@ export default function ProjectDetailModal({
               <div>
                 <p className="text-xs text-gray-600 font-semibold uppercase">Valor de Mi Contrato</p>
                 <p className="text-lg font-bold" style={{ color: '#006935' }}>
-                  {myParticipations.length > 0 && myParticipations[0].Valor_del_contrato__c 
-                    ? formatCurrency(myParticipations[0].Valor_del_contrato__c) 
+                  {myParticipations.length > 0 && myParticipations[0].Valor_contrato__c 
+                    ? formatCurrency(myParticipations[0].Valor_contrato__c) 
                     : '-'}
                 </p>
               </div>
@@ -211,11 +211,11 @@ export default function ProjectDetailModal({
                           </p>
                         )}
                       </div>
-                      {par.Valor_del_contrato__c && (
+                      {par.Valor_contrato__c && (
                         <div className="text-right">
                           <p className="text-xs text-gray-600 font-semibold uppercase">Valor</p>
                           <p className="text-lg font-bold" style={{ color: '#006935' }}>
-                            {formatCurrency(par.Valor_del_contrato__c)}
+                            {formatCurrency(par.Valor_contrato__c)}
                           </p>
                         </div>
                       )}
