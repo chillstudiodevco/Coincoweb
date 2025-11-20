@@ -285,21 +285,42 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                 </div>
               )}
 
-              {/* Archivo de Cuenta de Cobro - Solo cuando está pendiente de aprobación */}
-              {orden.Estado__c === 'Orden de compra para aprobación contratista' && cuentaCobro && (
-                <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
+              {/* Archivo de Cuenta de Cobro - Mostrar siempre que exista el documento */}
+              {cuentaCobro && (
+                <div className={`rounded-lg p-6 border-2 ${
+                  orden.Estado__c === 'Orden de compra para aprobación contratista' 
+                    ? 'bg-blue-50 border-blue-300' 
+                    : 'bg-green-50 border-green-300'
+                }`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h5 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                        <i className="fas fa-file-invoice-dollar text-blue-600"></i>
+                        <i className={`fas fa-file-invoice-dollar ${
+                          orden.Estado__c === 'Orden de compra para aprobación contratista' 
+                            ? 'text-blue-600' 
+                            : 'text-green-600'
+                        }`}></i>
                         Cuenta de Cobro del Proveedor
                       </h5>
-                      <p className="text-sm text-gray-600 mb-4">
-                        El proveedor ha enviado la cuenta de cobro para esta orden. Por favor revise el documento antes de aprobar.
-                      </p>
+                      
+                      {orden.Estado__c === 'Orden de compra para aprobación contratista' ? (
+                        <p className="text-sm text-gray-600 mb-4">
+                          El proveedor ha enviado la cuenta de cobro para esta orden. Por favor revise el documento antes de aprobar.
+                        </p>
+                      ) : (
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="inline-flex items-center gap-2 text-sm text-green-700 bg-green-100 px-3 py-1 rounded-full font-semibold">
+                            <i className="fas fa-check-circle"></i>
+                            Documento aprobado
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            Puede descargar o visualizar el archivo cuando lo necesite
+                          </span>
+                        </div>
+                      )}
                       
                       {/* Información del archivo */}
-                      <div className="bg-white rounded-lg p-4 mb-4 border border-blue-200">
+                      <div className="bg-white rounded-lg p-4 mb-4 border border-gray-300">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                           <div>
                             <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Archivo</p>
@@ -342,23 +363,27 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                           <i className="fas fa-eye"></i>
                           Vista Previa
                         </a>
-                        <button
-                          onClick={handleAprobarOrden}
-                          disabled={approving}
-                          className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {approving ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                              Aprobando...
-                            </>
-                          ) : (
-                            <>
-                              <i className="fas fa-check-circle"></i>
-                              Aprobar Orden
-                            </>
-                          )}
-                        </button>
+                        
+                        {/* Botón de aprobar SOLO si está pendiente de aprobación */}
+                        {orden.Estado__c === 'Orden de compra para aprobación contratista' && (
+                          <button
+                            onClick={handleAprobarOrden}
+                            disabled={approving}
+                            className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {approving ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                Aprobando...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fas fa-check-circle"></i>
+                                Aprobar Orden
+                              </>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
