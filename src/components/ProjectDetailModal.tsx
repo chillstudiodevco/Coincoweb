@@ -52,9 +52,22 @@ export default function ProjectDetailModal({
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) return;
 
-      // Obtener órdenes del proyecto específico
+      // Obtener los IDs de participantes del usuario en este proyecto
+      const myParticipantIds = project.participants
+        ?.filter(p => String(p.Cuenta__c) === String(accountId))
+        .map(p => p.Id)
+        .filter(Boolean) || [];
+
+      if (myParticipantIds.length === 0) {
+        console.log('[ProjectDetailModal] No participant IDs found for this user in project');
+        setOrdenes([]);
+        setLoading(false);
+        return;
+      }
+
+      // Obtener todas las órdenes del usuario y filtrar por participantes de este proyecto
       const response = await fetch(
-        `/api/salesforce/ordenes-compra?accountId=${accountId}&proyectoId=${project.Id}&limit=100`,
+        `/api/salesforce/ordenes-compra?accountId=${accountId}&limit=100`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -64,7 +77,12 @@ export default function ProjectDetailModal({
 
       const result = await response.json();
       if (result.success) {
-        setOrdenes(result.data?.ordenes || []);
+        const allOrdenes = result.data?.ordenes || [];
+        // Filtrar solo las órdenes que pertenecen a los participantes de este proyecto
+        const projectOrdenes = allOrdenes.filter((orden: OrdenDeCompra) => 
+          myParticipantIds.includes(orden.Participante__c)
+        );
+        setOrdenes(projectOrdenes);
       }
     } catch (error) {
       console.error('Error loading project orders:', error);

@@ -10,7 +10,7 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  * Query params:
  *   - id: Get single orden by Id
  *   - accountId: Get ordenes by account (busca todos los participantes del account)
- *   - participanteId: Get ordenes by participante específico
+ *   - participanteId: Get ordenes by participante específico (puede ser múltiples separados por coma)
  *   - includePartidas: true para incluir items/partidas de la orden
  *   - limit: Max records (default 100, max 500)
  *   - offset: Pagination offset (default 0)
@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
     } else if (accountId) {
       params.set('accountId', accountId);
     } else if (participanteId) {
+      // Puede ser uno o varios separados por coma
       params.set('participanteId', participanteId);
     }
     
