@@ -9,7 +9,7 @@ interface OrdenCompraDetailModalProps {
   onClose: () => void;
   ordenId: string;
 }
-
+//cambio
 export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: OrdenCompraDetailModalProps) {
   const [orden, setOrden] = useState<OrdenDeCompra | null>(null);
   const [cuentaCobro, setCuentaCobro] = useState<CuentaCobroDocumento | null>(null);
