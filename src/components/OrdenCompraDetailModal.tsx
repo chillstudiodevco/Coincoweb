@@ -408,31 +408,64 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                           <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Unidad</th>
                           <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Valor Unit.</th>
                           <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Subtotal</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Impuestos</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Descuentos</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Total</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {orden.Partidas_de_ordenes_de_compra__r.records.map((partida) => (
-                          <tr key={partida.Id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                              {partida.N_mero_de_item__c}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700">
-                              {partida.Descripci_n__c}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-center text-gray-900 font-medium">
-                              {partida.Cantidad__c}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-center text-gray-600">
-                              {partida.Unidad_de_medida__c}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-900">
-                              {partida.Valor_unitario__c ? formatCurrency(partida.Valor_unitario__c) : '-'}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                              {partida.Valor_total__c ? formatCurrency(partida.Valor_total__c) : '-'}
-                            </td>
-                          </tr>
-                        ))}
+                        {orden.Partidas_de_ordenes_de_compra__r.records.map((partida) => {
+                          const subtotal = partida.Valor_total__c || 0;
+                          const porcentajeImpuestos = partida.Impuestos__c || 0;
+                          const porcentajeDescuentos = partida.Descuentos__c || 0;
+                          
+                          // Calcular valores en moneda basados en porcentajes
+                          const valorImpuestos = subtotal * (porcentajeImpuestos / 100);
+                          const valorDescuentos = subtotal * (porcentajeDescuentos / 100);
+                          const total = subtotal + valorImpuestos - valorDescuentos;
+                          
+                          return (
+                            <tr key={partida.Id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                {partida.N_mero_de_item__c}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-gray-700">
+                                {partida.Descripci_n__c}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-center text-gray-900 font-medium">
+                                {partida.Cantidad__c}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-center text-gray-600">
+                                {partida.Unidad_de_medida__c}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-900">
+                                {partida.Valor_unitario__c ? formatCurrency(partida.Valor_unitario__c) : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-gray-900">
+                                {subtotal ? formatCurrency(subtotal) : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-green-700">
+                                {porcentajeImpuestos > 0 ? (
+                                  <div>
+                                    <div className="font-semibold">{porcentajeImpuestos}%</div>
+                                    <div className="text-xs">+{formatCurrency(valorImpuestos)}</div>
+                                  </div>
+                                ) : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right text-red-700">
+                                {porcentajeDescuentos > 0 ? (
+                                  <div>
+                                    <div className="font-semibold">{porcentajeDescuentos}%</div>
+                                    <div className="text-xs">-{formatCurrency(valorDescuentos)}</div>
+                                  </div>
+                                ) : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-right font-bold text-gray-900">
+                                {formatCurrency(total)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

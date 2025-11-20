@@ -59,6 +59,8 @@ export interface PartidaSalesforce {
   Orden_de_compra__c?: string;
   Valor_unitario__c?: number;
   Valor_total__c?: number;
+  Impuestos__c?: number;
+  Descuentos__c?: number;
 }
 
 // Orden de Compra de Salesforce (respuesta completa)
