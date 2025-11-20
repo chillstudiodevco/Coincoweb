@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getValidToken } from '@/lib/salesforce/auth';
 import { requireUser } from '@/lib/auth/requireUser';
-import type { OrdenDeCompra, OrdenDeCompraCreatePayload, OrdenDeCompraUpdatePayload } from '@/types/dashboard';
+import type { OrdenDeCompra, OrdenDeCompraCreatePayload, OrdenDeCompraUpdatePayload, CuentaCobroDocumento } from '@/types/dashboard';
 
 const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
 
@@ -12,6 +12,7 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  *   - accountId: Get ordenes by account (busca todos los participantes del account)
  *   - participanteId: Get ordenes by participante específico (puede ser múltiples separados por coma)
  *   - includePartidas: true para incluir items/partidas de la orden
+ *   - includeDocumento: true para incluir información del documento de cuenta de cobro
  *   - limit: Max records (default 100, max 500)
  *   - offset: Pagination offset (default 0)
  */
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     const accountId = searchParams.get('accountId');
     const participanteId = searchParams.get('participanteId');
     const includePartidas = searchParams.get('includePartidas');
+    const includeDocumento = searchParams.get('includeDocumento');
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');
 
@@ -56,6 +58,7 @@ export async function GET(request: NextRequest) {
     }
     
     if (includePartidas) params.set('includePartidas', includePartidas);
+    if (includeDocumento) params.set('includeDocumento', includeDocumento);
     if (limit) params.set('limit', limit);
     if (offset) params.set('offset', offset);
 
@@ -87,7 +90,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 8. Parsear respuesta JSON
-    let data: { orden?: OrdenDeCompra; ordenes?: OrdenDeCompra[] };
+    let data: { orden?: OrdenDeCompra; ordenes?: OrdenDeCompra[]; cuentaCobro?: CuentaCobroDocumento };
     try {
       const text = await sfResponse.text();
       data = JSON.parse(text);
@@ -106,7 +109,7 @@ export async function GET(request: NextRequest) {
     console.log('[Ordenes Compra GET] Success for user:', user.email);
     return NextResponse.json({
       success: true,
-      data: id ? { orden: data.orden } : { ordenes: data.ordenes || data || [] },
+      data: id ? { orden: data.orden, cuentaCobro: data.cuentaCobro } : { ordenes: data.ordenes || data || [] },
     });
 
   } catch (error: unknown) {

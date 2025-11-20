@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import supabaseClient from '@/lib/supabase/client';
-import type { OrdenDeCompra } from '@/types/dashboard';
+import type { OrdenDeCompra, CuentaCobroDocumento } from '@/types/dashboard';
 
 interface OrdenCompraDetailModalProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface OrdenCompraDetailModalProps {
 
 export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: OrdenCompraDetailModalProps) {
   const [orden, setOrden] = useState<OrdenDeCompra | null>(null);
+  const [cuentaCobro, setCuentaCobro] = useState<CuentaCobroDocumento | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
@@ -73,7 +74,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
       }
 
       const response = await fetch(
-        `/api/salesforce/ordenes-compra?id=${ordenId}&includePartidas=true`,
+        `/api/salesforce/ordenes-compra?id=${ordenId}&includePartidas=true&includeDocumento=true`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -89,6 +90,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
       }
 
       setOrden(result.data?.orden || null);
+      setCuentaCobro(result.data?.cuentaCobro || null);
     } catch (err) {
       console.error('Error fetching orden detail:', err);
       setError('Error al cargar la orden');
@@ -284,7 +286,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
               )}
 
               {/* Archivo de Cuenta de Cobro - Solo cuando está pendiente de aprobación */}
-              {orden.Estado__c === 'Orden de compra para aprobación contratista' && orden.Archivo_cuenta_de_cobro__c && (
+              {orden.Estado__c === 'Orden de compra para aprobación contratista' && cuentaCobro && (
                 <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -295,15 +297,50 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                       <p className="text-sm text-gray-600 mb-4">
                         El proveedor ha enviado la cuenta de cobro para esta orden. Por favor revise el documento antes de aprobar.
                       </p>
-                      <div className="flex gap-3">
+                      
+                      {/* Información del archivo */}
+                      <div className="bg-white rounded-lg p-4 mb-4 border border-blue-200">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Archivo</p>
+                            <p className="text-gray-800 font-medium flex items-center gap-2">
+                              <i className="fas fa-file-pdf text-red-500"></i>
+                              {cuentaCobro.fileName}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Tamaño</p>
+                            <p className="text-gray-800 font-medium">
+                              {(cuentaCobro.fileSize / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Fecha de subida</p>
+                            <p className="text-gray-800 font-medium">
+                              {new Date(cuentaCobro.createdDate).toLocaleDateString('es-CO')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
                         <a
-                          href={orden.Archivo_cuenta_de_cobro__c}
+                          href={cuentaCobro.downloadUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
                         >
-                          <i className="fas fa-external-link-alt"></i>
-                          Ver Documento
+                          <i className="fas fa-download"></i>
+                          Descargar Documento
+                        </a>
+                        <a
+                          href={cuentaCobro.viewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-400 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                        >
+                          <i className="fas fa-eye"></i>
+                          Vista Previa
                         </a>
                         <button
                           onClick={handleAprobarOrden}

@@ -37,6 +37,18 @@ export interface Invoice {
   description: string;
 }
 
+// Documento de Cuenta de Cobro adjunto a una orden
+export interface CuentaCobroDocumento {
+  fileName: string;
+  contentDocumentId: string;
+  contentVersionId: string;
+  fileExtension: string;
+  fileSize: number;
+  createdDate: string;
+  downloadUrl: string;
+  viewUrl: string;
+}
+
 // Partida de una orden de compra (respuesta de Salesforce)
 export interface PartidaSalesforce {
   Id?: string;
@@ -85,7 +97,6 @@ export interface OrdenDeCompra {
     Objeto_del_contrato__c?: string;
   };
   Total_abonado__c?: number;
-  Archivo_cuenta_de_cobro__c?: string; // URL del archivo de cuenta de cobro del proveedor
   partidas?: PartidaSalesforce[]; // Solo viene si includePartidas=true
   Partidas_de_ordenes_de_compra__r?: {
     totalSize?: number;
