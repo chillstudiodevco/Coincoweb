@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { OrdenDeCompra } from '@/types/dashboard';
+import FilterBar, { FilterConfig } from './FilterBar';
 
 interface OrdenCompraSectionProps {
   ordenes: OrdenDeCompra[];
@@ -24,6 +25,31 @@ export default function OrdenCompraSection({
   ordenesPerPage = 6,
   onPageChange,
 }: OrdenCompraSectionProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('date-desc');
+  const [filterStatus, setFilterStatus] = useState('');
+
+  const filterConfig: FilterConfig = {
+    searchPlaceholder: 'Buscar por número, proyecto o proveedor...',
+    sortOptions: [
+      { value: 'date-desc', label: 'Fecha (Más reciente)' },
+      { value: 'date-asc', label: 'Fecha (Más antigua)' },
+      { value: 'name-asc', label: 'Número (A-Z)' },
+      { value: 'name-desc', label: 'Número (Z-A)' },
+      { value: 'total-asc', label: 'Monto (Menor a Mayor)' },
+      { value: 'total-desc', label: 'Monto (Mayor a Menor)' },
+    ],
+    statusOptions: [
+      { value: 'Requisición generada', label: 'Requisición generada' },
+      { value: 'Aprobado', label: 'Aprobado' },
+      { value: 'Pendiente', label: 'Pendiente' },
+      { value: 'Rechazado', label: 'Rechazado' },
+      { value: 'Entregado', label: 'Entregado' },
+      { value: 'Cancelado', label: 'Cancelado' },
+    ],
+    showStatusFilter: true,
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -57,17 +83,67 @@ export default function OrdenCompraSection({
     });
   };
 
+  // Filtrar y ordenar órdenes
+  const filteredAndSortedOrdenes = useMemo(() => {
+    let result = [...ordenes];
+
+    // Aplicar búsqueda
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(o => 
+        (o.Name?.toLowerCase().includes(term)) ||
+        (o.Proyecto__r?.Name?.toLowerCase().includes(term)) ||
+        (o.Proveedor__r?.Cuenta__r?.Name?.toLowerCase().includes(term)) ||
+        (o.Participante__r?.Name?.toLowerCase().includes(term))
+      );
+    }
+
+    // Aplicar filtro de estado
+    if (filterStatus) {
+      result = result.filter(o => o.Estado__c === filterStatus);
+    }
+
+    // Aplicar ordenamiento
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-desc':
+          return new Date(b.Fecha__c || 0).getTime() - new Date(a.Fecha__c || 0).getTime();
+        case 'date-asc':
+          return new Date(a.Fecha__c || 0).getTime() - new Date(b.Fecha__c || 0).getTime();
+        case 'name-asc':
+          return (a.Name || '').localeCompare(b.Name || '');
+        case 'name-desc':
+          return (b.Name || '').localeCompare(a.Name || '');
+        case 'total-asc':
+          return (a.Total__c || 0) - (b.Total__c || 0);
+        case 'total-desc':
+          return (b.Total__c || 0) - (a.Total__c || 0);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [ordenes, searchTerm, filterStatus, sortBy]);
+
   // Calcular órdenes para la página actual
   const indexOfLastOrden = currentPage * ordenesPerPage;
   const indexOfFirstOrden = indexOfLastOrden - ordenesPerPage;
-  const currentOrdenes = ordenes.slice(indexOfFirstOrden, indexOfLastOrden);
-  const totalPages = Math.ceil(ordenes.length / ordenesPerPage);
+  const currentOrdenes = filteredAndSortedOrdenes.slice(indexOfFirstOrden, indexOfLastOrden);
+  const totalPages = Math.ceil(filteredAndSortedOrdenes.length / ordenesPerPage);
 
   const handlePageChange = (page: number) => {
     if (onPageChange) {
       onPageChange(page);
     }
   };
+
+  // Resetear página cuando cambian los filtros
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0 && onPageChange) {
+      onPageChange(1);
+    }
+  }, [filteredAndSortedOrdenes.length, currentPage, totalPages, onPageChange]);
 
   return (
     <div className="space-y-6">
@@ -92,6 +168,18 @@ export default function OrdenCompraSection({
           </button>
         </div>
       </div>
+
+      {!loadingOrdenes && (
+        <FilterBar
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          sortValue={sortBy}
+          onSortChange={setSortBy}
+          statusValue={filterStatus}
+          onStatusChange={setFilterStatus}
+          config={filterConfig}
+        />
+      )}
       
       {loadingOrdenes ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-lg">
@@ -128,11 +216,27 @@ export default function OrdenCompraSection({
             </div>
           </div>
         </div>
-      ) : ordenes.length === 0 ? (
+      ) : filteredAndSortedOrdenes.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-lg">
           <i className="fas fa-shopping-cart text-gray-400 text-5xl mb-4"></i>
-          <p className="text-gray-600 mb-2">No hay órdenes de compra</p>
-          <p className="text-gray-500 text-sm">Crea tu primera orden usando el botón &quot;Nueva Orden&quot;</p>
+          <p className="text-gray-600 mb-2">
+            {searchTerm || filterStatus ? 'No se encontraron órdenes con ese criterio' : 'No hay órdenes de compra'}
+          </p>
+          <p className="text-gray-500 text-sm">
+            {searchTerm || filterStatus ? (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterStatus('');
+                }}
+                className="text-green-600 hover:text-green-700 font-medium"
+              >
+                Limpiar filtros
+              </button>
+            ) : (
+              'Crea tu primera orden usando el botón "Nueva Orden"'
+            )}
+          </p>
         </div>
       ) : (
         <>
@@ -216,7 +320,7 @@ export default function OrdenCompraSection({
           </div>
 
           {/* Paginación */}
-          {ordenes.length > ordenesPerPage && onPageChange && (
+          {filteredAndSortedOrdenes.length > ordenesPerPage && onPageChange && (
             <div className="flex items-center justify-center gap-2 mt-6">
               <button
                 onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
@@ -250,6 +354,11 @@ export default function OrdenCompraSection({
               </button>
             </div>
           )}
+
+          {/* Información de resultados */}
+          <div className="text-center mt-4 text-sm text-gray-600">
+            Mostrando {indexOfFirstOrden + 1} - {Math.min(indexOfLastOrden, filteredAndSortedOrdenes.length)} de {filteredAndSortedOrdenes.length} orden(es)
+          </div>
         </>
       )}
     </div>

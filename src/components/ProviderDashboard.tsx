@@ -6,6 +6,7 @@ import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import OrdenCompraDetailModal from './OrdenCompraDetailModal';
 import ProjectDetailModal from './ProjectDetailModal';
 import OrdenCompraSection from './OrdenCompraSection';
+import ProyectosSection from './ProyectosSection';
 import type { Requisition, Invoice, OrdenDeCompra } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
@@ -673,112 +674,14 @@ export default function ProviderDashboard() {
                 </div>
 
                 {/* Proyectos (desde Salesforce) */}
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">Proyectos Asociados</h3>
-                  {projects.length === 0 ? (
-                    <div className="text-center py-12">
-                      <i className="fas fa-folder-open text-gray-400 text-5xl mb-4"></i>
-                      <p className="text-gray-600">No se encontraron proyectos asociados.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid gap-6">
-                        {projects.slice((currentPage - 1) * projectsPerPage, currentPage * projectsPerPage).map((p) => {
-                          // Buscar el participante del usuario actual en este proyecto
-                          const metadata = (currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata;
-                          const accountId = metadata?.salesforce_id as string | undefined;
-                          const myParticipant = p.participants?.find(par => String(par.Cuenta__c) === String(accountId));
-                          
-                          return (
-                            <div 
-                              key={p.Id} 
-                              className="bg-white rounded-xl border-2 border-gray-200 p-4 sm:p-6 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                              onClick={() => handleOpenProjectDetail(p)}
-                            >
-                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                                      <i className="fas fa-project-diagram text-green-600 text-lg"></i>
-                                    </div>
-                                    <div>
-                                      <h4 className="text-lg font-bold text-gray-800">{p.Name ?? 'Sin nombre'}</h4>
-                                      <p className="text-xs text-gray-500">{(p.participants ?? []).length} participante(s)</p>
-                                    </div>
-                                  </div>
-                                  <p className="text-sm text-gray-600 line-clamp-2">{p.Objeto_del_contrato__c ?? 'Sin descripción'}</p>
-                                </div>
-                                <div className="text-left sm:text-right">
-                                  <p className="text-xs text-gray-600 font-semibold uppercase">Mi Contrato</p>
-                                  <p className="text-lg font-bold" style={{ color: '#006935' }}>
-                                    {myParticipant?.Valor_contrato__c ? formatCurrency(myParticipant.Valor_contrato__c) : '-'}
-                                  </p>
-                                </div>
-                              </div>
-
-                            <div className="border-t pt-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4 text-xs text-gray-600">
-                                  <span>
-                                    <i className="fas fa-users mr-1"></i>
-                                    {(p.participants ?? []).length} participantes
-                                  </span>
-                                  {p.materialProviders && p.materialProviders.length > 0 && (
-                                    <span>
-                                      <i className="fas fa-truck mr-1"></i>
-                                      {p.materialProviders.length} proveedores
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  <i className="fas fa-hand-pointer mr-1"></i>
-                                  Click para ver detalle
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                        })}
-                      </div>
-
-                      {/* Paginación */}
-                      {projects.length > projectsPerPage && (
-                        <div className="flex items-center justify-center gap-2 mt-6">
-                          <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <i className="fas fa-chevron-left"></i>
-                          </button>
-                          
-                          {Array.from({ length: Math.ceil(projects.length / projectsPerPage) }, (_, i) => i + 1).map((page) => (
-                            <button
-                              key={page}
-                              onClick={() => setCurrentPage(page)}
-                              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                currentPage === page
-                                  ? 'text-white'
-                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                              }`}
-                              style={currentPage === page ? { backgroundColor: '#006935' } : {}}
-                            >
-                              {page}
-                            </button>
-                          ))}
-                          
-                          <button
-                            onClick={() => setCurrentPage(p => Math.min(Math.ceil(projects.length / projectsPerPage), p + 1))}
-                            disabled={currentPage === Math.ceil(projects.length / projectsPerPage)}
-                            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <i className="fas fa-chevron-right"></i>
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <ProyectosSection
+                  projects={projects}
+                  accountId={(currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata?.salesforce_id as string}
+                  onProjectClick={handleOpenProjectDetail}
+                  currentPage={currentPage}
+                  projectsPerPage={projectsPerPage}
+                  onPageChange={setCurrentPage}
+                />
               </div>
             )}
 
