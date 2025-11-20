@@ -738,24 +738,24 @@ export default function ProviderDashboard() {
 
             {activeSection === 'purchase-orders' && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-3xl font-bold text-gray-800">Órdenes de Compra</h2>
-                  <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Órdenes de Compra</h2>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <button
                       onClick={fetchOrdenes}
                       disabled={loadingOrdenes}
-                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Actualizar órdenes"
                     >
                       <i className={`fas fa-sync-alt ${loadingOrdenes ? 'animate-spin' : ''}`}></i>
-                      Actualizar
+                      <span>Actualizar</span>
                     </button>
                     <button
                       onClick={() => setShowOrdenCompraModal(true)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center gap-2"
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center gap-2"
                     >
                       <i className="fas fa-plus"></i>
-                      Nueva Orden
+                      <span>Nueva Orden</span>
                     </button>
                   </div>
                 </div>
@@ -806,23 +806,23 @@ export default function ProviderDashboard() {
                     {ordenes.map((orden) => (
                       <div 
                         key={orden.Id} 
-                        className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 cursor-pointer border border-transparent hover:border-green-200"
+                        className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow duration-300 cursor-pointer border border-transparent hover:border-green-200"
                         onClick={() => handleOpenOrdenDetail(orden.Id)}
                       >
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0 mb-4">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-800">{orden.Name || 'Sin número'}</h3>
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(orden.Estado__c || 'pending')}`}>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                              <h3 className="text-lg sm:text-xl font-bold text-gray-800">{orden.Name || 'Sin número'}</h3>
+                              <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(orden.Estado__c || 'pending')}`}>
                                 {orden.Estado__c || 'Pendiente'}
                               </span>
                             </div>
-                            <p className="text-gray-600 text-sm">
+                            <p className="text-gray-600 text-xs sm:text-sm">
                               <i className="fas fa-user-tie mr-2"></i>
                               Participante: {orden.Participante__r?.Name || 'N/A'}
                             </p>
                             {orden.Proveedor__r?.Cuenta__r?.Name && (
-                              <p className="text-gray-600 text-sm mt-1">
+                              <p className="text-gray-600 text-xs sm:text-sm mt-1">
                                 <i className="fas fa-store mr-2"></i>
                                 Proveedor: {orden.Proveedor__r.Cuenta__r.Name}
                               </p>
@@ -833,14 +833,14 @@ export default function ProviderDashboard() {
                               e.stopPropagation();
                               handleOpenOrdenDetail(orden.Id);
                             }}
-                            className="text-green-600 hover:text-green-700 p-2 rounded-full hover:bg-green-50 transition-colors"
+                            className="text-green-600 hover:text-green-700 p-2 rounded-full hover:bg-green-50 transition-colors self-start sm:self-auto"
                             title="Ver detalle"
                           >
-                            <i className="fas fa-eye text-xl"></i>
+                            <i className="fas fa-eye text-lg sm:text-xl"></i>
                           </button>
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
                           <div>
                             <p className="text-gray-600 text-xs font-semibold uppercase">Fecha</p>
                             <p className="font-bold text-sm">{orden.Fecha__c ? formatDate(orden.Fecha__c) : 'N/A'}</p>
@@ -852,16 +852,16 @@ export default function ProviderDashboard() {
                             </div>
                           )}
                           {orden.Total__c && (
-                            <div className="col-span-2">
+                            <div className="sm:col-span-2">
                               <p className="text-gray-600 text-xs font-semibold uppercase">Monto Total</p>
-                              <p className="font-bold text-lg" style={{ color: '#006935' }}>{formatCurrency(orden.Total__c)}</p>
+                              <p className="font-bold text-base sm:text-lg" style={{ color: '#006935' }}>{formatCurrency(orden.Total__c)}</p>
                             </div>
                           )}
                         </div>
                         
-                        <div className="border-t pt-4 flex items-center justify-between">
+                        <div className="border-t pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div className="flex-1">
-                            <p className="text-gray-600 text-sm">
+                            <p className="text-gray-600 text-xs sm:text-sm">
                               <i className="fas fa-project-diagram mr-2"></i>
                               <span className="font-medium">{orden.Proyecto__r?.Name || 'N/A'}</span>
                             </p>
@@ -872,7 +872,7 @@ export default function ProviderDashboard() {
                               </p>
                             )}
                           </div>
-                          <div className="text-right text-xs text-gray-500">
+                          <div className="text-left sm:text-right text-xs text-gray-500">
                             <i className="fas fa-hand-pointer mr-1"></i>
                             Click para ver detalle
                           </div>
