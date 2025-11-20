@@ -9,6 +9,9 @@ interface OrdenCompraSectionProps {
   onRefresh: () => void;
   onNewOrder: () => void;
   onOrderClick: (ordenId: string | undefined) => void;
+  currentPage?: number;
+  ordenesPerPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export default function OrdenCompraSection({
@@ -17,6 +20,9 @@ export default function OrdenCompraSection({
   onRefresh,
   onNewOrder,
   onOrderClick,
+  currentPage = 1,
+  ordenesPerPage = 6,
+  onPageChange,
 }: OrdenCompraSectionProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -49,6 +55,18 @@ export default function OrdenCompraSection({
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Calcular órdenes para la página actual
+  const indexOfLastOrden = currentPage * ordenesPerPage;
+  const indexOfFirstOrden = indexOfLastOrden - ordenesPerPage;
+  const currentOrdenes = ordenes.slice(indexOfFirstOrden, indexOfLastOrden);
+  const totalPages = Math.ceil(ordenes.length / ordenesPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (onPageChange) {
+      onPageChange(page);
+    }
   };
 
   return (
@@ -117,8 +135,9 @@ export default function OrdenCompraSection({
           <p className="text-gray-500 text-sm">Crea tu primera orden usando el botón &quot;Nueva Orden&quot;</p>
         </div>
       ) : (
-        <div className="grid gap-6">
-          {ordenes.map((orden) => (
+        <>
+          <div className="grid gap-6">
+            {currentOrdenes.map((orden) => (
             <div 
               key={orden.Id} 
               className="bg-white rounded-xl shadow-lg p-4 sm:p-6 hover:shadow-xl transition-shadow duration-300 cursor-pointer border border-transparent hover:border-green-200"
@@ -194,7 +213,44 @@ export default function OrdenCompraSection({
               </div>
             </div>
           ))}
-        </div>
+          </div>
+
+          {/* Paginación */}
+          {ordenes.length > ordenesPerPage && onPageChange && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <button
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <i className="fas fa-chevron-left"></i>
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    currentPage === page
+                      ? 'text-white'
+                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                  style={currentPage === page ? { backgroundColor: '#006935' } : {}}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              <button
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <i className="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

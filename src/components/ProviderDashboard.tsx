@@ -38,6 +38,10 @@ export default function ProviderDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const projectsPerPage = 6;
   
+  // Estado para paginación de órdenes de compra
+  const [currentOrdenesPage, setCurrentOrdenesPage] = useState(1);
+  const ordenesPerPage = 6;
+  
   // Estado para el proyecto seleccionado en el modal de orden de compra
   const [selectedProjectForOrden, setSelectedProjectForOrden] = useState<string>('');
   
@@ -838,6 +842,9 @@ export default function ProviderDashboard() {
                 onRefresh={fetchOrdenes}
                 onNewOrder={() => setShowOrdenCompraModal(true)}
                 onOrderClick={handleOpenOrdenDetail}
+                currentPage={currentOrdenesPage}
+                ordenesPerPage={ordenesPerPage}
+                onPageChange={setCurrentOrdenesPage}
               />
             )}
 
