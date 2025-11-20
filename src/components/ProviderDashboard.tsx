@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import supabaseClient from '@/lib/supabase/client';
 import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import OrdenCompraDetailModal from './OrdenCompraDetailModal';
+import ProjectDetailModal from './ProjectDetailModal';
 import type { Requisition, Invoice, OrdenDeCompra } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
@@ -20,7 +21,9 @@ export default function ProviderDashboard() {
   const [showNewRequisitionModal, setShowNewRequisitionModal] = useState(false);
   const [showOrdenCompraModal, setShowOrdenCompraModal] = useState(false);
   const [showOrdenDetailModal, setShowOrdenDetailModal] = useState(false);
+  const [showProjectDetailModal, setShowProjectDetailModal] = useState(false);
   const [selectedOrdenId, setSelectedOrdenId] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [currentUser, setCurrentUser] = useState<unknown | null>(null);
   const [salesforceData, setSalesforceData] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +32,10 @@ export default function ProviderDashboard() {
   // Estado para órdenes de compra
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>([]);
   const [loadingOrdenes, setLoadingOrdenes] = useState(false);
+  
+  // Estado para paginación de proyectos
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 6;
   
   // Estado para el proyecto seleccionado en el modal de orden de compra
   const [selectedProjectForOrden, setSelectedProjectForOrden] = useState<string>('');
@@ -179,6 +186,16 @@ export default function ProviderDashboard() {
     if (!ordenId) return;
     setSelectedOrdenId(ordenId);
     setShowOrdenDetailModal(true);
+  };
+
+  const handleOpenProjectDetail = (project: Project) => {
+    setSelectedProject(project);
+    setShowProjectDetailModal(true);
+  };
+
+  const handleGoToOrders = () => {
+    setActiveSection('purchase-orders');
+    setShowProjectDetailModal(false);
   };
 
   const handleCreateOrdenCompra = async (data: OrdenCompraFormData) => {
@@ -653,31 +670,100 @@ export default function ProviderDashboard() {
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Proyectos Asociados</h3>
                   {projects.length === 0 ? (
-                    <p className="text-gray-600">No se encontraron proyectos asociados.</p>
+                    <div className="text-center py-12">
+                      <i className="fas fa-folder-open text-gray-400 text-5xl mb-4"></i>
+                      <p className="text-gray-600">No se encontraron proyectos asociados.</p>
+                    </div>
                   ) : (
-                    <div className="grid gap-4">
-                      {projects.slice(0, 6).map((p, idx) => (
-                        <div key={p.Id ?? idx} className="p-4 border rounded-lg">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-bold text-gray-800">{p.Name ?? 'Sin nombre'}</h4>
-                              <p className="text-sm text-gray-600">{p.Objeto_del_contrato__c ?? ''}</p>
+                    <>
+                      <div className="grid gap-6">
+                        {projects.slice((currentPage - 1) * projectsPerPage, currentPage * projectsPerPage).map((p) => (
+                          <div 
+                            key={p.Id} 
+                            className="bg-white rounded-xl border-2 border-gray-200 p-4 sm:p-6 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                            onClick={() => handleOpenProjectDetail(p)}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                                    <i className="fas fa-project-diagram text-green-600 text-lg"></i>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-lg font-bold text-gray-800">{p.Name ?? 'Sin nombre'}</h4>
+                                    <p className="text-xs text-gray-500">{(p.participants ?? []).length} participante(s)</p>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-600 line-clamp-2">{p.Objeto_del_contrato__c ?? 'Sin descripción'}</p>
+                              </div>
+                              <div className="text-left sm:text-right">
+                                <p className="text-xs text-gray-600 font-semibold uppercase">Valor</p>
+                                <p className="text-lg font-bold" style={{ color: '#006935' }}>
+                                  {p.Valor_del_contrato__c ? formatCurrency(p.Valor_del_contrato__c) : '-'}
+                                </p>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="font-medium text-gray-800">{p.Valor_del_contrato__c ? formatCurrency(p.Valor_del_contrato__c) : '-'}</p>
-                              <p className="text-xs text-gray-500">{(p.participants ?? []).length} participante(s)</p>
+
+                            <div className="border-t pt-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4 text-xs text-gray-600">
+                                  <span>
+                                    <i className="fas fa-users mr-1"></i>
+                                    {(p.participants ?? []).length} participantes
+                                  </span>
+                                  {p.materialProviders && p.materialProviders.length > 0 && (
+                                    <span>
+                                      <i className="fas fa-truck mr-1"></i>
+                                      {p.materialProviders.length} proveedores
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  <i className="fas fa-hand-pointer mr-1"></i>
+                                  Click para ver detalle
+                                </div>
+                              </div>
                             </div>
                           </div>
+                        ))}
+                      </div>
 
-                          {(p.participants ?? []).slice(0, 3).map((par) => (
-                            <div key={par.Id} className="mt-3 text-sm text-gray-700">
-                              <p className="font-medium">{par.Name ?? ''} <span className="text-gray-500">· {par.CuentaName ?? ''}</span></p>
-                              <p className="text-gray-600">{stripHtml(par.Descripci_n_del_servicio__c ?? par.Name ?? '')}</p>
-                            </div>
+                      {/* Paginación */}
+                      {projects.length > projectsPerPage && (
+                        <div className="flex items-center justify-center gap-2 mt-6">
+                          <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <i className="fas fa-chevron-left"></i>
+                          </button>
+                          
+                          {Array.from({ length: Math.ceil(projects.length / projectsPerPage) }, (_, i) => i + 1).map((page) => (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                currentPage === page
+                                  ? 'text-white'
+                                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                              }`}
+                              style={currentPage === page ? { backgroundColor: '#006935' } : {}}
+                            >
+                              {page}
+                            </button>
                           ))}
+                          
+                          <button
+                            onClick={() => setCurrentPage(p => Math.min(Math.ceil(projects.length / projectsPerPage), p + 1))}
+                            disabled={currentPage === Math.ceil(projects.length / projectsPerPage)}
+                            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <i className="fas fa-chevron-right"></i>
+                          </button>
                         </div>
-                      ))}
-                    </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1129,6 +1215,22 @@ export default function ProviderDashboard() {
           setSelectedOrdenId('');
         }}
         ordenId={selectedOrdenId}
+      />
+
+      {/* Modal de Detalle de Proyecto */}
+      <ProjectDetailModal
+        isOpen={showProjectDetailModal}
+        onClose={() => {
+          setShowProjectDetailModal(false);
+          setSelectedProject(null);
+        }}
+        project={selectedProject}
+        onOrdenClick={(ordenId) => {
+          setSelectedOrdenId(ordenId);
+          setShowOrdenDetailModal(true);
+        }}
+        onGoToOrders={handleGoToOrders}
+        accountId={(currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata?.salesforce_id as string}
       />
     </div>
   );
