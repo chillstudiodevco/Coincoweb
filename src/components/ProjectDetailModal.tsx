@@ -11,6 +11,7 @@ interface Participant {
   Name?: string | null;
   Id?: string | null;
   Tipo_de_tercero__c?: string | null;
+  Valor_del_contrato__c?: number | null;
 }
 
 interface Project {
@@ -43,12 +44,6 @@ export default function ProjectDetailModal({
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && project?.Id && accountId) {
-      fetchProjectOrders();
-    }
-  }, [isOpen, project?.Id, accountId]);
-
   const fetchProjectOrders = async () => {
     if (!project?.Id || !accountId) return;
 
@@ -77,6 +72,13 @@ export default function ProjectDetailModal({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && project?.Id && accountId) {
+      fetchProjectOrders();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, project?.Id, accountId]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -162,9 +164,11 @@ export default function ProjectDetailModal({
                 <p className="text-sm font-medium text-gray-800">{project.Name || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-600 font-semibold uppercase">Valor del Contrato</p>
+                <p className="text-xs text-gray-600 font-semibold uppercase">Valor de Mi Contrato</p>
                 <p className="text-lg font-bold" style={{ color: '#006935' }}>
-                  {project.Valor_del_contrato__c ? formatCurrency(project.Valor_del_contrato__c) : '-'}
+                  {myParticipations.length > 0 && myParticipations[0].Valor_del_contrato__c 
+                    ? formatCurrency(myParticipations[0].Valor_del_contrato__c) 
+                    : '-'}
                 </p>
               </div>
               <div className="md:col-span-2">
@@ -207,6 +211,14 @@ export default function ProjectDetailModal({
                           </p>
                         )}
                       </div>
+                      {par.Valor_del_contrato__c && (
+                        <div className="text-right">
+                          <p className="text-xs text-gray-600 font-semibold uppercase">Valor</p>
+                          <p className="text-lg font-bold" style={{ color: '#006935' }}>
+                            {formatCurrency(par.Valor_del_contrato__c)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

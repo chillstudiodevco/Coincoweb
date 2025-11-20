@@ -48,6 +48,7 @@ export default function ProviderDashboard() {
     Name?: string | null;
     Id?: string | null;
     Tipo_de_tercero__c?: string | null;
+    Valor_del_contrato__c?: number | null;
   };
 
   type Project = {
@@ -677,32 +678,38 @@ export default function ProviderDashboard() {
                   ) : (
                     <>
                       <div className="grid gap-6">
-                        {projects.slice((currentPage - 1) * projectsPerPage, currentPage * projectsPerPage).map((p) => (
-                          <div 
-                            key={p.Id} 
-                            className="bg-white rounded-xl border-2 border-gray-200 p-4 sm:p-6 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                            onClick={() => handleOpenProjectDetail(p)}
-                          >
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                                    <i className="fas fa-project-diagram text-green-600 text-lg"></i>
+                        {projects.slice((currentPage - 1) * projectsPerPage, currentPage * projectsPerPage).map((p) => {
+                          // Buscar el participante del usuario actual en este proyecto
+                          const metadata = (currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata;
+                          const accountId = metadata?.salesforce_id as string | undefined;
+                          const myParticipant = p.participants?.find(par => String(par.Cuenta__c) === String(accountId));
+                          
+                          return (
+                            <div 
+                              key={p.Id} 
+                              className="bg-white rounded-xl border-2 border-gray-200 p-4 sm:p-6 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                              onClick={() => handleOpenProjectDetail(p)}
+                            >
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                                      <i className="fas fa-project-diagram text-green-600 text-lg"></i>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-lg font-bold text-gray-800">{p.Name ?? 'Sin nombre'}</h4>
+                                      <p className="text-xs text-gray-500">{(p.participants ?? []).length} participante(s)</p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <h4 className="text-lg font-bold text-gray-800">{p.Name ?? 'Sin nombre'}</h4>
-                                    <p className="text-xs text-gray-500">{(p.participants ?? []).length} participante(s)</p>
-                                  </div>
+                                  <p className="text-sm text-gray-600 line-clamp-2">{p.Objeto_del_contrato__c ?? 'Sin descripción'}</p>
                                 </div>
-                                <p className="text-sm text-gray-600 line-clamp-2">{p.Objeto_del_contrato__c ?? 'Sin descripción'}</p>
+                                <div className="text-left sm:text-right">
+                                  <p className="text-xs text-gray-600 font-semibold uppercase">Mi Contrato</p>
+                                  <p className="text-lg font-bold" style={{ color: '#006935' }}>
+                                    {myParticipant?.Valor_del_contrato__c ? formatCurrency(myParticipant.Valor_del_contrato__c) : '-'}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="text-left sm:text-right">
-                                <p className="text-xs text-gray-600 font-semibold uppercase">Valor</p>
-                                <p className="text-lg font-bold" style={{ color: '#006935' }}>
-                                  {p.Valor_del_contrato__c ? formatCurrency(p.Valor_del_contrato__c) : '-'}
-                                </p>
-                              </div>
-                            </div>
 
                             <div className="border-t pt-4">
                               <div className="flex items-center justify-between">
@@ -725,7 +732,8 @@ export default function ProviderDashboard() {
                               </div>
                             </div>
                           </div>
-                        ))}
+                        );
+                        })}
                       </div>
 
                       {/* Paginación */}
