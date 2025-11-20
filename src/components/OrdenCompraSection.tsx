@@ -3,7 +3,7 @@
 import React from 'react';
 import { OrdenDeCompra } from '@/types/dashboard';
 
-interface PurchaseOrdersSectionProps {
+interface OrdenCompraSectionProps {
   ordenes: OrdenDeCompra[];
   loadingOrdenes: boolean;
   onRefresh: () => void;
@@ -11,13 +11,13 @@ interface PurchaseOrdersSectionProps {
   onOrderClick: (ordenId: string | undefined) => void;
 }
 
-export default function PurchaseOrdersSection({
+export default function OrdenCompraSection({
   ordenes,
   loadingOrdenes,
   onRefresh,
   onNewOrder,
   onOrderClick,
-}: PurchaseOrdersSectionProps) {
+}: OrdenCompraSectionProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':

@@ -5,7 +5,7 @@ import supabaseClient from '@/lib/supabase/client';
 import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import OrdenCompraDetailModal from './OrdenCompraDetailModal';
 import ProjectDetailModal from './ProjectDetailModal';
-import PurchaseOrdersSection from './PurchaseOrdersSection';
+import OrdenCompraSection from './OrdenCompraSection';
 import type { Requisition, Invoice, OrdenDeCompra } from '@/types/dashboard';
 
 export default function ProviderDashboard() {
@@ -832,7 +832,7 @@ export default function ProviderDashboard() {
             )}
 
             {activeSection === 'purchase-orders' && (
-              <PurchaseOrdersSection
+              <OrdenCompraSection
                 ordenes={ordenes}
                 loadingOrdenes={loadingOrdenes}
                 onRefresh={fetchOrdenes}
