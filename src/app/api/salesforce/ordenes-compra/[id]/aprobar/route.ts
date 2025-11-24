@@ -120,7 +120,7 @@ export async function PATCH(
     }
 
     // 8. Parsear respuesta exitosa
-    let result: { success?: boolean; message?: string; orden?: any };
+    let result: { success?: boolean; message?: string; orden?: unknown };
     try {
       const text = await sfResponse.text();
       result = JSON.parse(text);
