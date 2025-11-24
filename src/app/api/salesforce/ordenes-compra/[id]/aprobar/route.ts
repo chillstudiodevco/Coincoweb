@@ -23,14 +23,14 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. Validar usuario autenticado
     const user = await requireUser(request);
     
     // 2. Obtener ordenId de los parámetros
-    const ordenId = params.id;
+    const { id: ordenId } = await context.params;
     
     if (!ordenId || ordenId.length < 15) {
       return NextResponse.json(
