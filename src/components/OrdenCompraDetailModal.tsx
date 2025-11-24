@@ -16,12 +16,28 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
+  
+  // Estados para el formulario de aprobación
+  const [showApprovalForm, setShowApprovalForm] = useState(false);
+  const [direccionEntrega, setDireccionEntrega] = useState('');
+  const [nombreRecibe, setNombreRecibe] = useState('');
+  const [telefonoContacto, setTelefonoContacto] = useState('');
+  const [archivoCC, setArchivoCC] = useState<File | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
-  const handleAprobarOrden = async () => {
-    if (!orden?.Id) return;
+  const handleSubmitApproval = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orden?.Id || !archivoCC) return;
+
+    // Validar campos requeridos
+    if (!direccionEntrega.trim() || !nombreRecibe.trim() || !telefonoContacto.trim()) {
+      setError('Todos los campos son requeridos');
+      return;
+    }
 
     try {
       setApproving(true);
+      setUploadingFile(true);
       setError(null);
 
       const { data: { session } } = await supabaseClient.auth.getSession();
@@ -30,15 +46,23 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
         return;
       }
 
-      const response = await fetch('/api/salesforce/ordenes-compra', {
+      // Convertir archivo a base64
+      const arrayBuffer = await archivoCC.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+      // Llamar al endpoint PATCH /aprobar
+      const response = await fetch(`/api/salesforce/ordenes-compra/${orden.Id}/aprobar`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          Id: orden.Id,
-          Estado__c: 'Orden de compra en tramite',
+          cuentaCobroBase64: base64,
+          cuentaCobroFileName: `[CUENTA DE COBRO] ${archivoCC.name}`,
+          nombrePersonaRecibe: nombreRecibe,
+          telefonoPersonaRecibe: telefonoContacto,
+          direccionEntrega: direccionEntrega,
         }),
       });
 
@@ -49,16 +73,29 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
         return;
       }
 
+      setUploadingFile(false);
+
       // Actualizar el estado local de la orden
-      setOrden(prev => prev ? { ...prev, Estado__c: 'Orden de compra en tramite' } : null);
+      setOrden(prev => prev ? {
+        ...prev,
+        Estado__c: 'Orden de compra en tramite',
+        Direcci_n_de_entrega__c: direccionEntrega,
+        Nombre_persona_que_recibe__c: nombreRecibe,
+        Tel_fono_persona_que_recibe__c: telefonoContacto,
+        Fecha_aprobacion_contratista__c: new Date().toISOString(),
+      } : null);
       
-      // Mostrar mensaje de éxito (opcional)
-      alert('Orden aprobada exitosamente');
+      setShowApprovalForm(false);
+      alert('✅ Cotización aprobada exitosamente. La orden está en trámite.');
+      
+      // Recargar para obtener el documento
+      await fetchOrdenDetail();
     } catch (err) {
       console.error('Error approving orden:', err);
       setError('Error al aprobar la orden');
     } finally {
       setApproving(false);
+      setUploadingFile(false);
     }
   };
 
@@ -285,39 +322,152 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                 </div>
               )}
 
-              {/* Archivo de Cuenta de Cobro - Mostrar siempre que exista el documento */}
+              {/* Formulario de Aprobación de Cotización - Solo cuando está pendiente */}
+              {orden.Estado__c === 'Orden de compra para aprobación contratista' && !cuentaCobro && (
+                <div className="bg-orange-50 rounded-lg p-6 border-2 border-orange-300">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h5 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <i className="fas fa-clipboard-check text-orange-600"></i>
+                        Aprobación de Cotización
+                      </h5>
+                      <p className="text-sm text-gray-700 mb-4">
+                        Revise la cotización en la tabla de items. Si está de acuerdo, complete los datos de entrega y cargue la cuenta de cobro para aprobar.
+                      </p>
+                    </div>
+                  </div>
+
+                  {!showApprovalForm ? (
+                    <button
+                      onClick={() => setShowApprovalForm(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all font-bold shadow-lg"
+                    >
+                      <i className="fas fa-check-circle"></i>
+                      Aprobar Cotización y Cargar Cuenta de Cobro
+                    </button>
+                  ) : (
+                    <form onSubmit={handleSubmitApproval} className="space-y-4">
+                      <div className="bg-white rounded-lg p-5 border border-orange-200 space-y-4">
+                        <h6 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                          <i className="fas fa-map-marker-alt text-orange-600"></i>
+                          Datos de Entrega
+                        </h6>
+                        
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Dirección de Entrega <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={direccionEntrega}
+                            onChange={(e) => setDireccionEntrega(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Ej: Calle 123 #45-67, Bogotá"
+                            required
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Nombre de Quien Recibe <span className="text-red-600">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={nombreRecibe}
+                              onChange={(e) => setNombreRecibe(e.target.value)}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                              placeholder="Ej: Juan Pérez"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Teléfono de Contacto <span className="text-red-600">*</span>
+                            </label>
+                            <input
+                              type="tel"
+                              value={telefonoContacto}
+                              onChange={(e) => setTelefonoContacto(e.target.value)}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                              placeholder="Ej: 3001234567"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            Cuenta de Cobro (PDF) <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={(e) => setArchivoCC(e.target.files?.[0] || null)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200"
+                            required
+                          />
+                          {archivoCC && (
+                            <p className="mt-2 text-sm text-gray-600 flex items-center gap-2">
+                              <i className="fas fa-file-pdf text-red-500"></i>
+                              {archivoCC.name} ({(archivoCC.size / 1024 / 1024).toFixed(2)} MB)
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          type="submit"
+                          disabled={approving || !archivoCC}
+                          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {approving ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                              {uploadingFile ? 'Subiendo archivo...' : 'Aprobando...'}
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-check-double"></i>
+                              Aprobar y Enviar
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowApprovalForm(false);
+                            setError(null);
+                          }}
+                          disabled={approving}
+                          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold disabled:opacity-50"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              {/* Cuenta de Cobro ya aprobada - Mostrar cuando existe el documento */}
               {cuentaCobro && (
-                <div className={`rounded-lg p-6 border-2 ${
-                  orden.Estado__c === 'Orden de compra para aprobación contratista' 
-                    ? 'bg-blue-50 border-blue-300' 
-                    : 'bg-green-50 border-green-300'
-                }`}>
+                <div className="bg-green-50 rounded-lg p-6 border-2 border-green-300">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h5 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                        <i className={`fas fa-file-invoice-dollar ${
-                          orden.Estado__c === 'Orden de compra para aprobación contratista' 
-                            ? 'text-blue-600' 
-                            : 'text-green-600'
-                        }`}></i>
-                        Cuenta de Cobro del Proveedor
+                        <i className="fas fa-file-invoice-dollar text-green-600"></i>
+                        Cuenta de Cobro
                       </h5>
                       
-                      {orden.Estado__c === 'Orden de compra para aprobación contratista' ? (
-                        <p className="text-sm text-gray-600 mb-4">
-                          El proveedor ha enviado la cuenta de cobro para esta orden. Por favor revise el documento antes de aprobar.
-                        </p>
-                      ) : (
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="inline-flex items-center gap-2 text-sm text-green-700 bg-green-100 px-3 py-1 rounded-full font-semibold">
-                            <i className="fas fa-check-circle"></i>
-                            Documento aprobado
-                          </span>
-                          <span className="text-sm text-gray-600">
-                            Puede descargar o visualizar el archivo cuando lo necesite
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="inline-flex items-center gap-2 text-sm text-green-700 bg-green-100 px-3 py-1 rounded-full font-semibold">
+                          <i className="fas fa-check-circle"></i>
+                          Cotización aprobada
+                        </span>
+                      </div>
                       
                       {/* Información del archivo */}
                       <div className="bg-white rounded-lg p-4 mb-4 border border-gray-300">
@@ -344,6 +494,36 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                         </div>
                       </div>
 
+                      {/* Datos de entrega */}
+                      {(orden.Direcci_n_de_entrega__c || orden.Nombre_persona_que_recibe__c || orden.Tel_fono_persona_que_recibe__c) && (
+                        <div className="bg-white rounded-lg p-4 mb-4 border border-gray-300">
+                          <h6 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                            <i className="fas fa-shipping-fast text-green-600"></i>
+                            Datos de Entrega
+                          </h6>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            {orden.Direcci_n_de_entrega__c && (
+                              <div>
+                                <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Dirección</p>
+                                <p className="text-gray-800">{orden.Direcci_n_de_entrega__c}</p>
+                              </div>
+                            )}
+                            {orden.Nombre_persona_que_recibe__c && (
+                              <div>
+                                <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Recibe</p>
+                                <p className="text-gray-800">{orden.Nombre_persona_que_recibe__c}</p>
+                              </div>
+                            )}
+                            {orden.Tel_fono_persona_que_recibe__c && (
+                              <div>
+                                <p className="text-xs text-gray-500 font-semibold uppercase mb-1">Teléfono</p>
+                                <p className="text-gray-800">{orden.Tel_fono_persona_que_recibe__c}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex flex-wrap gap-3">
                         <a
                           href={cuentaCobro.downloadUrl}
@@ -363,27 +543,6 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                           <i className="fas fa-eye"></i>
                           Vista Previa
                         </a>
-                        
-                        {/* Botón de aprobar SOLO si está pendiente de aprobación */}
-                        {orden.Estado__c === 'Orden de compra para aprobación contratista' && (
-                          <button
-                            onClick={handleAprobarOrden}
-                            disabled={approving}
-                            className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {approving ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                Aprobando...
-                              </>
-                            ) : (
-                              <>
-                                <i className="fas fa-check-circle"></i>
-                                Aprobar Orden
-                              </>
-                            )}
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -481,7 +640,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
               {(orden.Total__c || orden.Total_abonado__c) && (
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-700 font-semibold">Subtotal:</span>
+                    <span className="text-gray-700 font-semibold">Total:</span>
                     <span className="text-lg font-bold text-gray-900">
                       {orden.Total__c ? formatCurrency(orden.Total__c) : '-'}
                     </span>

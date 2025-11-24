@@ -99,6 +99,10 @@ export interface OrdenDeCompra {
     Objeto_del_contrato__c?: string;
   };
   Total_abonado__c?: number;
+  Direcci_n_de_entrega__c?: string;
+  Nombre_persona_que_recibe__c?: string;
+  Tel_fono_persona_que_recibe__c?: string;
+  Fecha_aprobacion_contratista__c?: string;
   partidas?: PartidaSalesforce[]; // Solo viene si includePartidas=true
   Partidas_de_ordenes_de_compra__r?: {
     totalSize?: number;
@@ -113,6 +117,18 @@ export interface OrdenDeCompraUpdatePayload {
   Detalle__c?: string;
   Total__c?: number;
   Estado__c?: string;
+  Direcci_n_de_entrega__c?: string;
+  Nombre_persona_que_recibe__c?: string;
+  Tel_fono_persona_que_recibe__c?: string;
+}
+
+// Payload para aprobar orden de compra
+export interface AprobarOrdenPayload {
+  cuentaCobroBase64: string;
+  cuentaCobroFileName: string;
+  nombrePersonaRecibe?: string;
+  telefonoPersonaRecibe?: string;
+  direccionEntrega?: string;
 }
 export type UnidadMedida = 'm' | 'm2' | 'm3' | 'unid' | 'kg' | 'caja' | 'lb' | 'L' | 'gal' | 'cuñete';
 
