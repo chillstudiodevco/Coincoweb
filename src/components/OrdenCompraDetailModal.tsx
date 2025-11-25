@@ -402,7 +402,8 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
               )}
 
               {/* Formulario de Aprobación para Director de Obra - Estado: Requisición aprobada */}
-              {orden.Estado__c === 'Requisición aprobada' && orden.Participante__r?.Aprobardor_de_ordenes__c && (
+              {/* Mostrar si la requisición está aprobada - El backend validará si el usuario es aprobador del proyecto */}
+              {orden.Estado__c === 'Requisición aprobada' && (
                 <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">

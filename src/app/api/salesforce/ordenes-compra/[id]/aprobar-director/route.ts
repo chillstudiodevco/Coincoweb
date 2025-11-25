@@ -12,6 +12,10 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  * - Registra fecha de aprobación por el director
  * - Opcionalmente puede incluir observaciones del director
  * 
+ * IMPORTANTE: Este endpoint valida en Salesforce que el usuario actual tenga un participante
+ * con Aprobardor_de_ordenes__c = true en el proyecto de la orden. Si no es aprobador, retornará error.
+ * Un aprobador puede aprobar TODAS las órdenes de su proyecto, no solo las suyas.
+ * 
  * Body: {
  *   observaciones?: string
  * }

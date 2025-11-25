@@ -55,6 +55,7 @@ export default function ProviderDashboard() {
     Id?: string | null;
     Tipo_de_tercero__c?: string | null;
     Valor_contrato__c?: number | null;
+    Aprobardor_de_ordenes__c?: boolean | null;
   };
 
   type Project = {
