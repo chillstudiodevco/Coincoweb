@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import supabaseClient from '@/lib/supabase/client';
 import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import OrdenCompraDetailModal from './OrdenCompraDetailModal';
@@ -69,6 +69,56 @@ export default function ProviderDashboard() {
   };
 
   const [projects, setProjects] = useState<Project[]>([]);
+
+  // Detectar si el usuario es director de obra (tiene al menos un participante con Aprobardor_de_ordenes__c = true)
+  const isDirectorDeObra = useMemo(() => {
+    return projects.some(proyecto => 
+      proyecto.participants?.some(p => p.Aprobardor_de_ordenes__c === true)
+    );
+  }, [projects]);
+
+  // Obtener proyectos donde el usuario es director de obra
+  const proyectosComoDirector = useMemo(() => {
+    return projects.filter(proyecto =>
+      proyecto.participants?.some(p => p.Aprobardor_de_ordenes__c === true)
+    );
+  }, [projects]);
+
+  // Estado para órdenes de proyectos de director
+  const [ordenesProyectosDirector, setOrdenesProyectosDirector] = useState<Record<string, OrdenDeCompra[]>>({});
+  const [loadingOrdenesDirector, setLoadingOrdenesDirector] = useState<Record<string, boolean>>({});
+
+  // Función para cargar órdenes de un proyecto específico
+  const fetchOrdenesProyecto = useCallback(async (proyectoId: string) => {
+    try {
+      setLoadingOrdenesDirector(prev => ({ ...prev, [proyectoId]: true }));
+
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(
+        `/api/salesforce/ordenes-compra?proyectoId=${proyectoId}&includePartidas=true&limit=100`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setOrdenesProyectosDirector(prev => ({
+          ...prev,
+          [proyectoId]: result.data?.ordenes || []
+        }));
+      }
+    } catch (err) {
+      console.error('Error fetching ordenes proyecto:', err);
+    } finally {
+      setLoadingOrdenesDirector(prev => ({ ...prev, [proyectoId]: false }));
+    }
+  }, []);
 
 
   const getAccountProjectsFromSalesforce = useCallback((sf: unknown): Project[] => {
@@ -683,6 +733,80 @@ export default function ProviderDashboard() {
                   projectsPerPage={projectsPerPage}
                   onPageChange={setCurrentPage}
                 />
+
+                {/* Órdenes por Proyecto (Solo para Directores de Obra) */}
+                {isDirectorDeObra && proyectosComoDirector.length > 0 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <i className="fas fa-user-check text-2xl" style={{color: '#006935'}}></i>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        Mis Proyectos como Director de Obra
+                      </h2>
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      Como Director de Obra, puedes aprobar las requisiciones de estos proyectos.
+                    </p>
+                    
+                    {proyectosComoDirector.map((proyecto) => {
+                      const proyectoId = proyecto.Id!;
+                      const ordenesProyecto = ordenesProyectosDirector[proyectoId] || [];
+                      const loading = loadingOrdenesDirector[proyectoId] || false;
+                      const ordenesPendientes = ordenesProyecto.filter(o => o.Estado__c === 'Requisición aprobada').length;
+
+                      return (
+                        <div key={proyectoId} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                          <div 
+                            className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 cursor-pointer hover:from-blue-700 hover:to-blue-800 transition-colors"
+                            onClick={() => {
+                              if (!ordenesProyecto.length && !loading) {
+                                fetchOrdenesProyecto(proyectoId);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="text-xl font-bold text-white">{proyecto.Name}</h3>
+                                <p className="text-blue-100 text-sm">
+                                  {ordenesProyecto.length} {ordenesProyecto.length === 1 ? 'orden' : 'órdenes'}
+                                  {ordenesPendientes > 0 && (
+                                    <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-xs font-semibold">
+                                      {ordenesPendientes} {ordenesPendientes === 1 ? 'pendiente' : 'pendientes'}
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="p-6">
+                            {ordenesProyecto.length > 0 && (
+                              <OrdenCompraSection
+                                ordenes={ordenesProyecto}
+                                loadingOrdenes={loading}
+                                onRefresh={() => fetchOrdenesProyecto(proyectoId)}
+                                onOrderClick={handleOpenOrdenDetail}
+                                title={`Órdenes del Proyecto`}
+                                showNewOrderButton={false}
+                              />
+                            )}
+
+                            {ordenesProyecto.length === 0 && !loading && (
+                              <div className="text-center py-8">
+                                <button
+                                  onClick={() => fetchOrdenesProyecto(proyectoId)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                                >
+                                  <i className="fas fa-eye mr-2"></i>
+                                  Ver Órdenes del Proyecto
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 

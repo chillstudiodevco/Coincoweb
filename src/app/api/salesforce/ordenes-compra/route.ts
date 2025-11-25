@@ -11,6 +11,7 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  *   - id: Get single orden by Id
  *   - accountId: Get ordenes by account (busca todos los participantes del account)
  *   - participanteId: Get ordenes by participante específico (puede ser múltiples separados por coma)
+ *   - proyectoId: Get ordenes by proyecto (para directores de obra)
  *   - includePartidas: true para incluir items/partidas de la orden
  *   - includeDocumento: true para incluir información del documento de cuenta de cobro
  *   - limit: Max records (default 100, max 500)
@@ -26,17 +27,18 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id');
     const accountId = searchParams.get('accountId');
     const participanteId = searchParams.get('participanteId');
+    const proyectoId = searchParams.get('proyectoId');
     const includePartidas = searchParams.get('includePartidas');
     const includeDocumento = searchParams.get('includeDocumento');
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');
 
     // 3. Validar parámetros (al menos uno debe estar presente)
-    if (!id && !accountId && !participanteId) {
+    if (!id && !accountId && !participanteId && !proyectoId) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Se requiere "id", "accountId" o "participanteId" como parámetro' 
+          error: 'Se requiere "id", "accountId", "participanteId" o "proyectoId" como parámetro' 
         },
         { status: 400 }
       );
@@ -55,6 +57,8 @@ export async function GET(request: NextRequest) {
     } else if (participanteId) {
       // Puede ser uno o varios separados por coma
       params.set('participanteId', participanteId);
+    } else if (proyectoId) {
+      params.set('proyectoId', proyectoId);
     }
     
     if (includePartidas) params.set('includePartidas', includePartidas);

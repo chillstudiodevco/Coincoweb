@@ -8,11 +8,13 @@ interface OrdenCompraSectionProps {
   ordenes: OrdenDeCompra[];
   loadingOrdenes: boolean;
   onRefresh: () => void;
-  onNewOrder: () => void;
+  onNewOrder?: () => void;
   onOrderClick: (ordenId: string | undefined) => void;
   currentPage?: number;
   ordenesPerPage?: number;
   onPageChange?: (page: number) => void;
+  title?: string;
+  showNewOrderButton?: boolean;
 }
 
 export default function OrdenCompraSection({
@@ -24,6 +26,8 @@ export default function OrdenCompraSection({
   currentPage = 1,
   ordenesPerPage = 6,
   onPageChange,
+  title = 'Órdenes de Compra',
+  showNewOrderButton = true,
 }: OrdenCompraSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date-desc');
@@ -169,7 +173,7 @@ export default function OrdenCompraSection({
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Órdenes de Compra</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{title}</h2>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <button
             onClick={onRefresh}
@@ -180,13 +184,15 @@ export default function OrdenCompraSection({
             <i className={`fas fa-sync-alt ${loadingOrdenes ? 'animate-spin' : ''}`}></i>
             <span>Actualizar</span>
           </button>
-          <button
-            onClick={onNewOrder}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center gap-2"
-          >
-            <i className="fas fa-plus"></i>
-            <span>Nueva Orden</span>
-          </button>
+          {showNewOrderButton && onNewOrder && (
+            <button
+              onClick={onNewOrder}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center gap-2"
+            >
+              <i className="fas fa-plus"></i>
+              <span>Nueva Orden</span>
+            </button>
+          )}
         </div>
       </div>
 
