@@ -6,7 +6,9 @@ export interface FilterConfig {
   searchPlaceholder: string;
   sortOptions: { value: string; label: string }[];
   statusOptions?: { value: string; label: string; color?: string }[];
+  projectOptions?: { value: string; label: string }[];
   showStatusFilter?: boolean;
+  showProjectFilter?: boolean;
 }
 
 interface FilterBarProps {
@@ -16,6 +18,8 @@ interface FilterBarProps {
   onSortChange: (value: string) => void;
   statusValue?: string;
   onStatusChange?: (value: string) => void;
+  projectValue?: string;
+  onProjectChange?: (value: string) => void;
   config: FilterConfig;
 }
 
@@ -26,11 +30,13 @@ export default function FilterBar({
   onSortChange,
   statusValue = '',
   onStatusChange,
+  projectValue = '',
+  onProjectChange,
   config,
 }: FilterBarProps) {
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Búsqueda */}
         <div className="relative">
           <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -82,10 +88,31 @@ export default function FilterBar({
             <i className="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
           </div>
         )}
+
+        {/* Filtro de Proyecto (opcional) */}
+        {config.showProjectFilter && config.projectOptions && onProjectChange && (
+          <div className="relative">
+            <i className="fas fa-project-diagram absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <select
+              value={projectValue}
+              onChange={(e) => onProjectChange(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none cursor-pointer"
+              style={{ '--tw-ring-color': '#006935' } as React.CSSProperties}
+            >
+              <option value="">Todos los proyectos</option>
+              {config.projectOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <i className="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+          </div>
+        )}
       </div>
 
       {/* Indicadores activos */}
-      {(searchValue || statusValue || sortValue !== config.sortOptions[0]?.value) && (
+      {(searchValue || statusValue || projectValue || sortValue !== config.sortOptions[0]?.value) && (
         <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
           <span className="text-sm text-gray-600 font-medium">Filtros activos:</span>
           
@@ -109,6 +136,19 @@ export default function FilterBar({
               <button
                 onClick={() => onStatusChange?.('')}
                 className="ml-1 hover:text-blue-900"
+              >
+                <i className="fas fa-times text-xs"></i>
+              </button>
+            </span>
+          )}
+          
+          {projectValue && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+              <i className="fas fa-project-diagram text-xs"></i>
+              {config.projectOptions?.find(p => p.value === projectValue)?.label}
+              <button
+                onClick={() => onProjectChange?.('')}
+                className="ml-1 hover:text-orange-900"
               >
                 <i className="fas fa-times text-xs"></i>
               </button>

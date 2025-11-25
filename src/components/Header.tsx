@@ -190,7 +190,7 @@ export default function Header() {
                         onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#006935'}
                       >
                         <i className="fas fa-user-shield mr-2"></i>
-                        Acceso Proveedores
+                        Ingreso portal
                       </button>
                     )}
                   </>

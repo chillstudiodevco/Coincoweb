@@ -28,6 +28,17 @@ export default function OrdenCompraSection({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('date-desc');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterProject, setFilterProject] = useState('');
+
+  // Obtener lista única de proyectos para el filtro
+  const uniqueProjects = useMemo(() => {
+    const projects = ordenes
+      .map(o => ({ id: o.Proyecto__c, name: o.Proyecto__r?.Name }))
+      .filter((p, index, self) => 
+        p.id && p.name && self.findIndex(x => x.id === p.id) === index
+      );
+    return projects;
+  }, [ordenes]);
 
   const filterConfig: FilterConfig = {
     searchPlaceholder: 'Buscar por número, proyecto o proveedor...',
@@ -41,13 +52,18 @@ export default function OrdenCompraSection({
     ],
     statusOptions: [
       { value: 'Requisición generada', label: 'Requisición generada' },
-      { value: 'Aprobado', label: 'Aprobado' },
-      { value: 'Pendiente', label: 'Pendiente' },
-      { value: 'Rechazado', label: 'Rechazado' },
-      { value: 'Entregado', label: 'Entregado' },
-      { value: 'Cancelado', label: 'Cancelado' },
+      { value: 'Requisición aprobada', label: 'Requisición aprobada' },
+      { value: 'Cotización en trámite', label: 'Cotización en trámite' },
+      { value: 'Orden de compra para aprobación contratista', label: 'Orden de compra para aprobación contratista' },
+      { value: 'Orden de compra en tramite', label: 'Orden de compra en tramite' },
+      { value: 'Orden de compra tramitada', label: 'Orden de compra tramitada' },
+      { value: 'Remisión', label: 'Remisión' },
+      { value: 'Facturado', label: 'Facturado' },
+      { value: 'Pago programado', label: 'Pago programado' },
     ],
+    projectOptions: uniqueProjects.map(p => ({ value: p.id || '', label: p.name || '' })),
     showStatusFilter: true,
+    showProjectFilter: true,
   };
 
   const getStatusColor = (status: string) => {
@@ -103,6 +119,11 @@ export default function OrdenCompraSection({
       result = result.filter(o => o.Estado__c === filterStatus);
     }
 
+    // Aplicar filtro de proyecto
+    if (filterProject) {
+      result = result.filter(o => o.Proyecto__c === filterProject);
+    }
+
     // Aplicar ordenamiento
     result.sort((a, b) => {
       switch (sortBy) {
@@ -124,7 +145,7 @@ export default function OrdenCompraSection({
     });
 
     return result;
-  }, [ordenes, searchTerm, filterStatus, sortBy]);
+  }, [ordenes, searchTerm, filterStatus, filterProject, sortBy]);
 
   // Calcular órdenes para la página actual
   const indexOfLastOrden = currentPage * ordenesPerPage;
@@ -177,6 +198,8 @@ export default function OrdenCompraSection({
           onSortChange={setSortBy}
           statusValue={filterStatus}
           onStatusChange={setFilterStatus}
+          projectValue={filterProject}
+          onProjectChange={setFilterProject}
           config={filterConfig}
         />
       )}
@@ -220,14 +243,15 @@ export default function OrdenCompraSection({
         <div className="text-center py-12 bg-white rounded-xl shadow-lg">
           <i className="fas fa-shopping-cart text-gray-400 text-5xl mb-4"></i>
           <p className="text-gray-600 mb-2">
-            {searchTerm || filterStatus ? 'No se encontraron órdenes con ese criterio' : 'No hay órdenes de compra'}
+            {searchTerm || filterStatus || filterProject ? 'No se encontraron órdenes con ese criterio' : 'No hay órdenes de compra'}
           </p>
           <p className="text-gray-500 text-sm">
-            {searchTerm || filterStatus ? (
+            {searchTerm || filterStatus || filterProject ? (
               <button
                 onClick={() => {
                   setSearchTerm('');
                   setFilterStatus('');
+                  setFilterProject('');
                 }}
                 className="text-green-600 hover:text-green-700 font-medium"
               >
