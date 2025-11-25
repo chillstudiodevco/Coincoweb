@@ -73,12 +73,36 @@ export async function PATCH(
     }
 
     console.log('[Aprobar Orden] Processing approval for orden:', ordenId);
+    console.log('[Aprobar Orden] Request body:', {
+      ordenId,
+      fileName: body.cuentaCobroFileName,
+      hasBase64: !!body.cuentaCobroBase64,
+      base64Length: body.cuentaCobroBase64?.length || 0,
+      nombrePersonaRecibe: body.nombrePersonaRecibe,
+      telefonoPersonaRecibe: body.telefonoPersonaRecibe,
+      direccionEntrega: body.direccionEntrega,
+    });
 
     // 5. Obtener token de Salesforce
     const salesforceToken = await getValidToken();
 
     // 6. Llamar al endpoint de Salesforce /portal/ordenes/{ordenId}/aprobar
     const apexUrl = `${SALESFORCE_INSTANCE_URL}/services/apexrest/portal/ordenes/${ordenId}/aprobar`;
+    
+    const requestBody = {
+      ordenId: ordenId,
+      cuentaCobroBase64: body.cuentaCobroBase64,
+      cuentaCobroFileName: body.cuentaCobroFileName,
+      nombrePersonaRecibe: body.nombrePersonaRecibe || '',
+      telefonoPersonaRecibe: body.telefonoPersonaRecibe || '',
+      direccionEntrega: body.direccionEntrega || '',
+    };
+
+    console.log('[Aprobar Orden] Salesforce URL:', apexUrl);
+    console.log('[Aprobar Orden] Sending to Salesforce:', { 
+      ...requestBody, 
+      cuentaCobroBase64: `[base64 ${requestBody.cuentaCobroBase64.length} chars]` 
+    });
 
     const sfResponse = await fetch(apexUrl, {
       method: 'PATCH',
@@ -86,14 +110,7 @@ export async function PATCH(
         'Authorization': `Bearer ${salesforceToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ordenId: ordenId,
-        cuentaCobroBase64: body.cuentaCobroBase64,
-        cuentaCobroFileName: body.cuentaCobroFileName,
-        nombrePersonaRecibe: body.nombrePersonaRecibe || '',
-        telefonoPersonaRecibe: body.telefonoPersonaRecibe || '',
-        direccionEntrega: body.direccionEntrega || '',
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     // 7. Manejar respuesta de Salesforce

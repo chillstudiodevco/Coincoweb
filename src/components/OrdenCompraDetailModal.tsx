@@ -50,6 +50,15 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
       const arrayBuffer = await archivoCC.arrayBuffer();
       const base64 = Buffer.from(arrayBuffer).toString('base64');
 
+      console.log('[Modal] Aprobando orden:', {
+        ordenId: orden.Id,
+        fileName: archivoCC.name,
+        base64Length: base64.length,
+        direccionEntrega,
+        nombreRecibe,
+        telefonoContacto,
+      });
+
       // Llamar al endpoint PATCH /aprobar
       const response = await fetch(`/api/salesforce/ordenes-compra/${orden.Id}/aprobar`, {
         method: 'PATCH',
@@ -68,8 +77,12 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
 
       const result = await response.json();
 
+      console.log('[Modal] Response:', { status: response.status, result });
+
       if (!response.ok || !result.success) {
-        setError(result.error || 'Error al aprobar la orden');
+        const errorMsg = result.error || result.details || 'Error al aprobar la orden';
+        console.error('[Modal] Error aprobando:', errorMsg);
+        setError(errorMsg);
         return;
       }
 
