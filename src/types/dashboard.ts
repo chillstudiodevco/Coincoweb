@@ -83,6 +83,8 @@ export interface OrdenDeCompra {
     Id?: string;
     Name?: string;
     Descripci_n_del_servicio__c?: string;
+    Aprobardor_de_ordenes__c?: boolean;
+    Tipo_de_tercero__c?: string;
   };
   Proveedor__r?: {
     Id?: string;

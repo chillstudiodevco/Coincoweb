@@ -89,6 +89,8 @@ export async function PATCH(
     // 6. Llamar al endpoint de Salesforce /portal/ordenes/{ordenId}/aprobar
     const apexUrl = `${SALESFORCE_INSTANCE_URL}/services/apexrest/portal/ordenes/${ordenId}/aprobar`;
     
+    // Nota: Salesforce requiere ordenId en el body además de la URL para este endpoint específico
+    // (diferente a /aprobar-director que solo lo extrae de la URL)
     const requestBody = {
       ordenId: ordenId,
       cuentaCobroBase64: body.cuentaCobroBase64,
