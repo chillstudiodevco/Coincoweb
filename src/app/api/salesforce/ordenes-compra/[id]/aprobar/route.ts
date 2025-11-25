@@ -87,6 +87,7 @@ export async function PATCH(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        ordenId: ordenId,
         cuentaCobroBase64: body.cuentaCobroBase64,
         cuentaCobroFileName: body.cuentaCobroFileName,
         nombrePersonaRecibe: body.nombrePersonaRecibe || '',
