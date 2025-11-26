@@ -277,6 +277,16 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
     );
   }, [orden, salesforceData, currentUserId]);
 
+  // DEBUG: Mostrar valores clave para depuración
+  useEffect(() => {
+    console.log('DEBUG Director:', {
+      ordenProyecto: orden?.Proyecto__c,
+      salesforceProjects: salesforceData?.account?.projects,
+      currentUserId,
+      isUserDirectorDeObra
+    });
+  }, [orden, salesforceData, currentUserId, isUserDirectorDeObra]);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
