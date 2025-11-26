@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import supabaseClient from '@/lib/supabase/client';
 import type { OrdenDeCompra, CuentaCobroDocumento } from '@/types/dashboard';
 
@@ -16,6 +16,20 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState(false);
+  const [salesforceData, setSalesforceData] = useState<{
+    account?: {
+      projects?: Array<{
+        Id?: string;
+        Name?: string;
+        participants?: Array<{
+          Id?: string;
+          Name?: string;
+          Cuenta__c?: string;
+          Aprobardor_de_ordenes__c?: boolean;
+        }>;
+      }>;
+    };
+  } | null>(null);
   
   // Estados para el formulario de aprobación
   const [showApprovalForm, setShowApprovalForm] = useState(false);
@@ -217,10 +231,43 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
 
   useEffect(() => {
     if (isOpen && ordenId) {
+      // Cargar datos de Salesforce desde localStorage (incluye proyectos y participantes)
+      try {
+        const storedData = localStorage.getItem('salesforceData');
+        if (storedData) {
+          setSalesforceData(JSON.parse(storedData));
+        }
+      } catch (err) {
+        console.error('Error loading salesforce data from localStorage:', err);
+      }
+      
       fetchOrdenDetail();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, ordenId]);
+
+  // Verificar si el usuario actual es Director de Obra (Aprobador) en el proyecto de esta orden
+  const isUserDirectorDeObra = useMemo(() => {
+    if (!orden?.Proyecto__c || !salesforceData?.account?.projects) {
+      return false;
+    }
+
+    // Buscar el proyecto de la orden
+    const proyecto = salesforceData.account.projects.find(
+      (p) => p.Id === orden.Proyecto__c
+    );
+
+    if (!proyecto || !proyecto.participants) {
+      return false;
+    }
+
+    // Verificar si existe un participante con Aprobardor_de_ordenes__c = true
+    const esAprobador = proyecto.participants.some(
+      (p) => p.Aprobardor_de_ordenes__c === true
+    );
+
+    return esAprobador;
+  }, [orden, salesforceData]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -402,8 +449,8 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
               )}
 
               {/* Formulario de Aprobación para Director de Obra - Estado: Requisición generada */}
-              {/* Mostrar si la requisición está en estado generada - El backend validará si el usuario es aprobador del proyecto */}
-              {orden.Estado__c === 'Requisición generada' && (
+              {/* Mostrar SOLO si: 1) Estado = "Requisición generada" Y 2) Usuario es Director de Obra del proyecto */}
+              {orden.Estado__c === 'Requisición generada' && isUserDirectorDeObra && (
                 <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">

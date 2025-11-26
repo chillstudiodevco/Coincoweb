@@ -99,6 +99,17 @@ export interface OrdenDeCompra {
     Id?: string;
     Name?: string;
     Objeto_del_contrato__c?: string;
+    Participantes__r?: {
+      totalSize?: number;
+      done?: boolean;
+      records?: Array<{
+        Id?: string;
+        Name?: string;
+        Cuenta__c?: string;
+        Aprobardor_de_ordenes__c?: boolean;
+        Tipo_de_tercero__c?: string;
+      }>;
+    };
   };
   Total_abonado__c?: number;
   Direcci_n_de_entrega__c?: string;
