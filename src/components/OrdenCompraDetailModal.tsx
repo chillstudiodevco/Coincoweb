@@ -262,7 +262,6 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
     if (!orden?.Proyecto__c || !salesforceData?.account?.projects || !currentUserId) {
       return false;
     }
-    console.log('DEBUG salesforceData:', salesforceData);
     // Buscar el proyecto de la orden
     const proyecto = salesforceData.account.projects.find(
       (p) => p.Id === orden.Proyecto__c
@@ -277,6 +276,11 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
       (p) => p.Aprobardor_de_ordenes__c === true && p.Cuenta__c === currentUserId
     );
   }, [orden, salesforceData, currentUserId]);
+
+  // DEBUG: Mostrar el objeto salesforceData completo cada vez que cambie
+  useEffect(() => {
+    console.log('DEBUG salesforceData:', salesforceData);
+  }, [salesforceData]);
 
   // DEBUG: Mostrar valores clave para depuración
   useEffect(() => {
