@@ -243,6 +243,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const parsed = JSON.parse(storedUser);
+          setSalesforceData(parsed);
           const metadata = parsed?.user_metadata;
           if (metadata?.salesforce_id) {
             setCurrentUserId(metadata.salesforce_id);
