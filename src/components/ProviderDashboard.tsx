@@ -77,49 +77,6 @@ export default function ProviderDashboard() {
     );
   }, [projects]);
 
-  // Obtener proyectos donde el usuario es director de obra
-  const proyectosComoDirector = useMemo(() => {
-    return projects.filter(proyecto =>
-      proyecto.participants?.some(p => p.Aprobardor_de_ordenes__c === true)
-    );
-  }, [projects]);
-
-  // Estado para órdenes de proyectos de director
-  const [ordenesProyectosDirector, setOrdenesProyectosDirector] = useState<Record<string, OrdenDeCompra[]>>({});
-  const [loadingOrdenesDirector, setLoadingOrdenesDirector] = useState<Record<string, boolean>>({});
-
-  // Función para cargar órdenes de un proyecto específico
-  const fetchOrdenesProyecto = useCallback(async (proyectoId: string) => {
-    try {
-      setLoadingOrdenesDirector(prev => ({ ...prev, [proyectoId]: true }));
-
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch(
-        `/api/salesforce/ordenes-compra?proyectoId=${proyectoId}&includePartidas=true&limit=100`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        }
-      );
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setOrdenesProyectosDirector(prev => ({
-          ...prev,
-          [proyectoId]: result.data?.ordenes || []
-        }));
-      }
-    } catch (err) {
-      console.error('Error fetching ordenes proyecto:', err);
-    } finally {
-      setLoadingOrdenesDirector(prev => ({ ...prev, [proyectoId]: false }));
-    }
-  }, []);
-
 
   const getAccountProjectsFromSalesforce = useCallback((sf: unknown): Project[] => {
     if (!sf || typeof sf !== 'object') return [];
@@ -222,8 +179,54 @@ export default function ProviderDashboard() {
         return;
       }
 
-      const loadedOrdenes = result.data?.ordenes || [];
-      console.log(`✅ [Dashboard] ${loadedOrdenes.length} órdenes cargadas de todos los proyectos`);
+      let loadedOrdenes = result.data?.ordenes || [];
+      console.log(`✅ [Dashboard] ${loadedOrdenes.length} órdenes cargadas como participante`);
+
+      // ✅ Si es Director de Obra, cargar también las órdenes de los proyectos donde es director
+      const proyectosDirector = projects.filter(proyecto =>
+        proyecto.participants?.some(p => p.Aprobardor_de_ordenes__c === true)
+      );
+
+      if (proyectosDirector.length > 0) {
+        console.log(`🔄 [Dashboard] Cargando órdenes de ${proyectosDirector.length} proyectos como Director de Obra`);
+        
+        const ordenesDirectorPromises = proyectosDirector.map(async (proyecto) => {
+          try {
+            const respProyecto = await fetch(
+              `/api/salesforce/ordenes-compra?proyectoId=${proyecto.Id}&includePartidas=true&limit=100`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+              }
+            );
+
+            const resultProyecto = await respProyecto.json();
+            if (respProyecto.ok && resultProyecto.success) {
+              return resultProyecto.data?.ordenes || [];
+            }
+            return [];
+          } catch (err) {
+            console.error('Error cargando órdenes del proyecto:', proyecto.Id, err);
+            return [];
+          }
+        });
+
+        const ordenesDirectorArrays = await Promise.all(ordenesDirectorPromises);
+        const ordenesDirector = ordenesDirectorArrays.flat();
+
+        // ✅ Combinar órdenes sin duplicados (usar Set con IDs)
+        const ordenesMap = new Map();
+        [...loadedOrdenes, ...ordenesDirector].forEach(orden => {
+          if (orden.Id) {
+            ordenesMap.set(orden.Id, orden);
+          }
+        });
+
+        loadedOrdenes = Array.from(ordenesMap.values());
+        console.log(`✅ [Dashboard] Total ${loadedOrdenes.length} órdenes (incluyendo ${ordenesDirector.length} como Director)`);
+      }
+
       setOrdenes(loadedOrdenes);
 
     } catch (error) {
@@ -231,7 +234,7 @@ export default function ProviderDashboard() {
     } finally {
       setLoadingOrdenes(false);
     }
-  }, [currentUser]);
+  }, [currentUser, projects]);
 
   const handleNewRequisition = (e: React.FormEvent) => {
     e.preventDefault();
@@ -505,12 +508,12 @@ export default function ProviderDashboard() {
     checkAuth();
   }, [getAccountProjectsFromSalesforce]);
 
-  // Cargar órdenes cuando el usuario esté autenticado
+  // Cargar órdenes cuando el usuario esté autenticado o cuando cambien los proyectos
   useEffect(() => {
-    if (authenticated && currentUser) {
+    if (authenticated && currentUser && projects.length > 0) {
       fetchOrdenes();
     }
-  }, [authenticated, currentUser, fetchOrdenes]);
+  }, [authenticated, currentUser, projects.length, fetchOrdenes]);
 
   const displayCompany = () => {
     // try a few common fields safely
@@ -734,77 +737,18 @@ export default function ProviderDashboard() {
                   onPageChange={setCurrentPage}
                 />
 
-                {/* Órdenes por Proyecto (Solo para Directores de Obra) */}
-                {isDirectorDeObra && proyectosComoDirector.length > 0 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3">
-                      <i className="fas fa-user-check text-2xl" style={{color: '#006935'}}></i>
-                      <h2 className="text-2xl font-bold text-gray-800">
-                        Mis Proyectos como Director de Obra
-                      </h2>
+                {/* Mensaje informativo para Directores de Obra */}
+                {isDirectorDeObra && (
+                  <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <i className="fas fa-info-circle text-blue-600 text-xl mt-1"></i>
+                      <div>
+                        <h3 className="font-bold text-blue-900 mb-1">Director de Obra</h3>
+                        <p className="text-blue-800 text-sm">
+                          Como Director de Obra, puedes ver y aprobar todas las órdenes de compra de tus proyectos en la sección &quot;Órdenes de Compra&quot;.
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-gray-600 mb-4">
-                      Como Director de Obra, puedes aprobar las requisiciones de estos proyectos.
-                    </p>
-                    
-                    {proyectosComoDirector.map((proyecto) => {
-                      const proyectoId = proyecto.Id!;
-                      const ordenesProyecto = ordenesProyectosDirector[proyectoId] || [];
-                      const loading = loadingOrdenesDirector[proyectoId] || false;
-                      const ordenesPendientes = ordenesProyecto.filter(o => o.Estado__c === 'Requisición aprobada').length;
-
-                      return (
-                        <div key={proyectoId} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-                          <div 
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 cursor-pointer hover:from-blue-700 hover:to-blue-800 transition-colors"
-                            onClick={() => {
-                              if (!ordenesProyecto.length && !loading) {
-                                fetchOrdenesProyecto(proyectoId);
-                              }
-                            }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="text-xl font-bold text-white">{proyecto.Name}</h3>
-                                <p className="text-blue-100 text-sm">
-                                  {ordenesProyecto.length} {ordenesProyecto.length === 1 ? 'orden' : 'órdenes'}
-                                  {ordenesPendientes > 0 && (
-                                    <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-yellow-900 rounded-full text-xs font-semibold">
-                                      {ordenesPendientes} {ordenesPendientes === 1 ? 'pendiente' : 'pendientes'}
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="p-6">
-                            {ordenesProyecto.length > 0 && (
-                              <OrdenCompraSection
-                                ordenes={ordenesProyecto}
-                                loadingOrdenes={loading}
-                                onRefresh={() => fetchOrdenesProyecto(proyectoId)}
-                                onOrderClick={handleOpenOrdenDetail}
-                                title={`Órdenes del Proyecto`}
-                                showNewOrderButton={false}
-                              />
-                            )}
-
-                            {ordenesProyecto.length === 0 && !loading && (
-                              <div className="text-center py-8">
-                                <button
-                                  onClick={() => fetchOrdenesProyecto(proyectoId)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                                >
-                                  <i className="fas fa-eye mr-2"></i>
-                                  Ver Órdenes del Proyecto
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
                 )}
               </div>

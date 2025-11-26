@@ -8,7 +8,7 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  * PATCH /api/salesforce/ordenes-compra/{ordenId}/aprobar-director
  * 
  * Aprueba una requisición por parte del Director de Obra (usuario con Aprobardor_de_ordenes__c = true)
- * - Cambia estado de "Requisición aprobada" a "Cotización en trámite"
+ * - Cambia estado de "Requisición generada" a "Requisición aprobada"
  * - Registra fecha de aprobación por el director
  * - Opcionalmente puede incluir observaciones del director
  * 

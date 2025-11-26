@@ -75,11 +75,11 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
       // Actualizar el estado local de la orden
       setOrden(prev => prev ? {
         ...prev,
-        Estado__c: 'Cotización en trámite',
+        Estado__c: 'Requisición aprobada',
       } : null);
       
       setShowDirectorApprovalForm(false);
-      alert('✅ Requisición aprobada exitosamente. Se enviará a cotización.');
+      alert('✅ Requisición aprobada exitosamente. Ahora pasará a cotización.');
       
       // Recargar para obtener datos actualizados
       await fetchOrdenDetail();
@@ -401,9 +401,9 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                 </div>
               )}
 
-              {/* Formulario de Aprobación para Director de Obra - Estado: Requisición aprobada */}
-              {/* Mostrar si la requisición está aprobada - El backend validará si el usuario es aprobador del proyecto */}
-              {orden.Estado__c === 'Requisición aprobada' && (
+              {/* Formulario de Aprobación para Director de Obra - Estado: Requisición generada */}
+              {/* Mostrar si la requisición está en estado generada - El backend validará si el usuario es aprobador del proyecto */}
+              {orden.Estado__c === 'Requisición generada' && (
                 <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
