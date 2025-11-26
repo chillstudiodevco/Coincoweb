@@ -261,7 +261,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
     if (!orden?.Proyecto__c || !salesforceData?.account?.projects || !currentUserId) {
       return false;
     }
-
+    console.log('DEBUG salesforceData:', salesforceData);
     // Buscar el proyecto de la orden
     const proyecto = salesforceData.account.projects.find(
       (p) => p.Id === orden.Proyecto__c
