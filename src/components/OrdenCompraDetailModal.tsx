@@ -229,6 +229,9 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
     }
   };
 
+  // Obtener el salesforce_id del usuario actual
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   useEffect(() => {
     if (isOpen && ordenId) {
       // Cargar datos de Salesforce desde localStorage (incluye proyectos y participantes)
@@ -237,10 +240,17 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
         if (storedData) {
           setSalesforceData(JSON.parse(storedData));
         }
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          const metadata = parsed?.user_metadata;
+          if (metadata?.salesforce_id) {
+            setCurrentUserId(metadata.salesforce_id);
+          }
+        }
       } catch (err) {
-        console.error('Error loading salesforce data from localStorage:', err);
+        console.error('Error loading salesforce data or user from localStorage:', err);
       }
-      
       fetchOrdenDetail();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -248,7 +258,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
 
   // Verificar si el usuario actual es Director de Obra (Aprobador) en el proyecto de esta orden
   const isUserDirectorDeObra = useMemo(() => {
-    if (!orden?.Proyecto__c || !salesforceData?.account?.projects) {
+    if (!orden?.Proyecto__c || !salesforceData?.account?.projects || !currentUserId) {
       return false;
     }
 
@@ -261,13 +271,11 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
       return false;
     }
 
-    // Verificar si existe un participante con Aprobardor_de_ordenes__c = true
-    const esAprobador = proyecto.participants.some(
-      (p) => p.Aprobardor_de_ordenes__c === true
+    // Verificar si el usuario actual es participante aprobador
+    return proyecto.participants.some(
+      (p) => p.Aprobardor_de_ordenes__c === true && p.Cuenta__c === currentUserId
     );
-
-    return esAprobador;
-  }, [orden, salesforceData]);
+  }, [orden, salesforceData, currentUserId]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
