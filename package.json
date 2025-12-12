@@ -17,7 +17,7 @@
     "@vercel/edge-config": "^1.4.0",
     "axios": "^1.10.0",
     "jsonwebtoken": "^9.0.2",
-    "next": "15.3.5",
+    "next": "15.3.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
