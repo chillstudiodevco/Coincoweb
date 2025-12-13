@@ -43,7 +43,7 @@ export default function Footer() {
         </div>
 
         {/* Botón de volver arriba */}
-        <div className="absolute bottom-8 right-8">
+        <div className="mt-6 flex justify-center md:justify-end">
           <a
             href="#inicio"
             className="w-12 h-12 bg-coinco-green hover:bg-green-700 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 animate-pulse-glow cursor-pointer"
