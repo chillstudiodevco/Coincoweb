@@ -3,7 +3,7 @@ import Image from 'next/image';
 export default function ProjectsSection() {
   const projects = [
     {
-      src: "/CONSTRUCCION DE EDIFICACIONES.jpg",
+      src: "/CONSTRUCCIÓN DE EDIFICACIONES.jpg",
       alt: "Construcción de Edificaciones",
       title: "Construcción de Edificaciones"
     },
@@ -13,12 +13,12 @@ export default function ProjectsSection() {
       title: "Mejoramiento de vivienda"
     },
     {
-      src: "/MANTENIMIENTO DE EDIFICACIONES.jpg",
+      src: "/MANTENIMIENTO DE EDIFICACIONES.png",
       alt: "Mantenimiento de Edificaciones",
       title: "Mantenimiento de Edificaciones"
     },
     {
-      src: "/REFORZAMIENTO ESTRUCTURAL.png",
+      src: "/REFORZAMIENTO ESTRUCTUAL.png",
       alt: "Reforzamiento estructural",
       title: "Reforzamiento estructural"
     },
@@ -28,7 +28,7 @@ export default function ProjectsSection() {
       title: "Montaje de cubiertas"
     },
     {
-      src: "/INSTALACION DE PANELERIA ACUSTICA.jpg",
+      src: "/INSTALACIÓN DE PANELERÍA ACÚSTICA.jpg",
       alt: "Instalación de panelería acústica",
       title: "Instalación de panelería acústica"
     }
