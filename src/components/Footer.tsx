@@ -23,7 +23,7 @@ export default function Footer() {
             <p>© 2025 Constructora De Infraestructura Colombiana COINCO S.A.S.</p>
             <p className="mt-1">Todos los derechos reservados. Hecho con ❤️ en Colombia por Chill Studio</p>
           </div>
-          <div className="flex items-center space-x-6 text-sm">
+          <div className="flex items-center gap-6 text-sm flex-wrap md:flex-nowrap justify-center md:justify-end">
             <div className="flex space-x-4">
               {socialLinks.map((social) => (
                 <a
@@ -39,17 +39,13 @@ export default function Footer() {
             </div>
             <a href="POLÍTICA DE TRATAMIENTO DE DATOS PERSONALES COINCO SAS V1.pdf" className="text-gray-300 hover:text-coinco-green transition-colors duration-300 cursor-pointer">Política de Privacidad</a>
             <a href="Terminos y Condiciones Sitio Web Coinco V1.pdf" className="text-gray-300 hover:text-coinco-green transition-colors duration-300 cursor-pointer">Términos de Uso</a>
+            <a
+              href="#inicio"
+              className="w-12 h-12 bg-coinco-green hover:bg-green-700 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 animate-pulse-glow cursor-pointer flex-shrink-0"
+            >
+              <i className="fas fa-chevron-up"></i>
+            </a>
           </div>
-        </div>
-
-        {/* Botón de volver arriba */}
-        <div className="mt-6 flex justify-center md:justify-end">
-          <a
-            href="#inicio"
-            className="w-12 h-12 bg-coinco-green hover:bg-green-700 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 animate-pulse-glow cursor-pointer"
-          >
-            <i className="fas fa-chevron-up"></i>
-          </a>
         </div>
       </div>
     </footer>
