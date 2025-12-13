@@ -21,7 +21,7 @@ export default function Footer() {
   <div className="py-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="text-gray-300 text-sm text-center md:text-left">
             <p>© 2025 Constructora De Infraestructura Colombiana COINCO S.A.S.</p>
-            <p className="mt-1">Todos los derechos reservados. Hecho con ❤️ en Colombia</p>
+            <p className="mt-1">Todos los derechos reservados. Hecho con ❤️ en Colombia por Chill Studio</p>
           </div>
           <div className="flex items-center space-x-6 text-sm">
             <div className="flex space-x-4">
@@ -37,9 +37,8 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-            <a href="#" className="text-gray-300 hover:text-coinco-green transition-colors duration-300 cursor-pointer">Política de Privacidad</a>
-            <a href="#" className="text-gray-300 hover:text-coinco-green transition-colors duration-300 cursor-pointer">Términos de Uso</a>
-            <a href="#" className="text-gray-300 hover:text-coinco-green transition-colors duration-300 cursor-pointer">Aviso Legal</a>
+            <a href="POLÍTICA DE TRATAMIENTO DE DATOS PERSONALES COINCO SAS V1.pdf" className="text-gray-300 hover:text-coinco-green transition-colors duration-300 cursor-pointer">Política de Privacidad</a>
+            <a href="Terminos y Condiciones Sitio Web Coinco V1.pdf" className="text-gray-300 hover:text-coinco-green transition-colors duration-300 cursor-pointer">Términos de Uso</a>
           </div>
         </div>
 
