@@ -28,7 +28,7 @@ export default function ProjectsSection() {
       title: "Montaje de cubiertas"
     },
     {
-      src: "/INSTALACIÓN DE PANELERÍA ACÚSTICA.jpg",
+      src: "/INSTALACIÓN PANELERÍA ACÚSTICA.jpg",
       alt: "Instalación de panelería acústica",
       title: "Instalación de panelería acústica"
     }
