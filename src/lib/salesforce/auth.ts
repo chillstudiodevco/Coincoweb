@@ -50,10 +50,10 @@ async function getSalesforceToken(): Promise<string> {
   const loginUrl = process.env.SALESFORCE_LOGIN_URL;
   const clientId = process.env.SALESFORCE_CLIENT_ID;
   const clientSecret = process.env.SALESFORCE_CLIENT_SECRET;
-  const username = process.env.SALESFORCE_USERNAME;
-  const password = process.env.SALESFORCE_PASSWORD;
+  //const username = process.env.SALESFORCE_USERNAME;
+  //const password = process.env.SALESFORCE_PASSWORD;
 
-  if (!loginUrl || !clientId || !clientSecret || !username || !password) {
+  if (!loginUrl || !clientId || !clientSecret ) {
     throw new Error('Faltan credenciales de Salesforce en variables de entorno');
   }
 
@@ -63,11 +63,9 @@ async function getSalesforceToken(): Promise<string> {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
-      grant_type: 'password',
+      grant_type: 'client_credentials',
       client_id: clientId,
       client_secret: clientSecret,
-      username: username,
-      password: password,
     }),
   });
 
