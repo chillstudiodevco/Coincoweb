@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import supabaseClient from '@/lib/supabase/client';
 import type { ItemOrdenCompra, UnidadMedida } from '@/types/dashboard';
 
 interface OrdenCompraModalProps {
@@ -10,6 +11,11 @@ interface OrdenCompraModalProps {
   proveedores: Array<{ id: string; nombre: string }>;
   proyectos: Array<{ id: string; nombre: string }>;
   onProyectoChange?: (proyectoId: string) => void;
+}
+
+interface ItemSuggestion {
+  Id: string;
+  Descripci_n__c: string;
 }
 
 export interface OrdenCompraFormData {
@@ -47,6 +53,13 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
     },
   ]);
 
+  // Estados para autocomplete
+  const [suggestions, setSuggestions] = useState<ItemSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<string | null>(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
   const agregarItem = () => {
     setItems([
       ...items,
@@ -75,10 +88,122 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
     );
   };
 
+  // Función para buscar items con debounce
+  const searchItems = useCallback(async (term: string, itemId: string) => {
+    if (term.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(null);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    setShowSuggestions(itemId);
+
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        console.error('No hay sesión activa');
+        return;
+      }
+
+      const response = await fetch(
+        `/api/salesforce/ordenes-compra?searchItems=${encodeURIComponent(term)}&limit=5`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      console.log('🔍 [Autocomplete] Búsqueda:', term);
+      console.log('📦 [Autocomplete] Respuesta completa:', result);
+      console.log('📋 [Autocomplete] Items recibidos:', result.items);
+      
+      // Log detallado de cada item
+      if (result.items && result.items.length > 0) {
+        console.log('🔍 [Autocomplete] Primer item completo:', result.items[0]);
+        console.log('🔍 [Autocomplete] Keys del primer item:', Object.keys(result.items[0]));
+        result.items.forEach((item: any, idx: number) => {
+          console.log(`📦 Item ${idx}:`, {
+            Id: item.Id,
+            'Descripción__c': item.Descripción__c,
+            'Descripcion__c': item.Descripcion__c,
+            allKeys: Object.keys(item)
+          });
+        });
+      }
+
+      if (response.ok && result.success) {
+        setSuggestions(result.items || []);
+        console.log('✅ [Autocomplete] Sugerencias guardadas:', result.items?.length || 0);
+      } else {
+        console.error('❌ [Autocomplete] Error al buscar items:', result);
+        setSuggestions([]);
+      }
+    } catch (error) {
+      console.error('Error inesperado al buscar items:', error);
+      setSuggestions([]);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  }, []);
+
+  // Handler para cambio en descripción con debounce
+  const handleDescripcionChange = useCallback((itemId: string, value: string) => {
+    // Actualizar el valor inmediatamente
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === itemId
+          ? { ...item, descripcion: value }
+          : item
+      )
+    );
+
+    // Cancelar timer anterior
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Nuevo timer con debounce de 300ms
+    debounceTimer.current = setTimeout(() => {
+      searchItems(value, itemId);
+    }, 300);
+  }, [searchItems]);
+
+  // Seleccionar sugerencia
+  const selectSuggestion = (itemId: string, descripcion: string) => {
+    actualizarItem(itemId, 'descripcion', descripcion);
+    setSuggestions([]);
+    setShowSuggestions(null);
+  };
+
+  // Cerrar sugerencias al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(null);
+        setSuggestions([]);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Limpiar timer al desmontar
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validaciones
     if (!proveedorId) {
       alert('Debe seleccionar un proveedor');
       return;
@@ -122,7 +247,6 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
   };
 
   const handleClose = () => {
-    // Reset form al cerrar
     setProveedorId('');
     setProyectoId('');
     setDetalle('');
@@ -168,7 +292,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                 onChange={(e) => {
                   setProyectoId(e.target.value);
                   onProyectoChange?.(e.target.value);
-                  setProveedorId(''); // Resetear proveedor cuando cambia el proyecto
+                  setProveedorId('');
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 style={{ maxHeight: '200px' }}
@@ -260,7 +384,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                       {index + 1}
                     </div>
 
-                    {/* Botón eliminar (solo si hay más de 1) */}
+                    {/* Botón eliminar */}
                     {items.length > 1 && (
                       <button
                         type="button"
@@ -273,19 +397,52 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                     )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-2">
-                      {/* Descripción */}
-                      <div className="sm:col-span-2 lg:col-span-6">
+                      {/* Descripción con Autocomplete */}
+                      <div className="sm:col-span-2 lg:col-span-6 relative">
                         <label className="block text-xs font-medium text-gray-600 mb-1">
                           Descripción
                         </label>
-                        <input
-                          type="text"
-                          value={item.descripcion}
-                          onChange={(e) => actualizarItem(item.id, 'descripcion', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Ej: Cemento gris, Varilla corrugada..."
-                          required
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={item.descripcion}
+                            onChange={(e) => handleDescripcionChange(item.id, e.target.value)}
+                            onFocus={() => {
+                              if (item.descripcion.length >= 2 && suggestions.length > 0) {
+                                setShowSuggestions(item.id);
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            placeholder="Ej: Cemento gris, Varilla corrugada..."
+                            required
+                            autoComplete="off"
+                          />
+                          {loadingSuggestions && showSuggestions === item.id && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <i className="fas fa-spinner fa-spin text-gray-400 text-sm"></i>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Dropdown de Sugerencias */}
+                        {showSuggestions === item.id && suggestions.length > 0 && (
+                          <div 
+                            ref={suggestionsRef}
+                            className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                          >
+                            {suggestions.map((suggestion) => (
+                              <button
+                                key={suggestion.Id}
+                                type="button"
+                                onClick={() => selectSuggestion(item.id, suggestion.Descripci_n__c)}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-green-50 hover:text-green-700 transition-colors border-b border-gray-100 last:border-b-0 flex items-start gap-2"
+                              >
+                                <i className="fas fa-box text-green-600 mt-1 text-xs"></i>
+                                <span className="flex-1">{suggestion.Descripci_n__c}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Unidad de Medida */}

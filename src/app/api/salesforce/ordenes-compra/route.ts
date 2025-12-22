@@ -12,9 +12,10 @@ const SALESFORCE_INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
  *   - accountId: Get ordenes by account (busca todos los participantes del account)
  *   - participanteId: Get ordenes by participante específico (puede ser múltiples separados por coma)
  *   - proyectoId: Get ordenes by proyecto (para directores de obra)
+ *   - searchItems: Buscar items por descripción (autocomplete) - mínimo 2 caracteres
  *   - includePartidas: true para incluir items/partidas de la orden
  *   - includeDocumento: true para incluir información del documento de cuenta de cobro
- *   - limit: Max records (default 100, max 500)
+ *   - limit: Max records (default 100, max 500) - Para searchItems default 5, max 10
  *   - offset: Pagination offset (default 0)
  */
 export async function GET(request: NextRequest) {
@@ -28,17 +29,92 @@ export async function GET(request: NextRequest) {
     const accountId = searchParams.get('accountId');
     const participanteId = searchParams.get('participanteId');
     const proyectoId = searchParams.get('proyectoId');
+    const searchItems = searchParams.get('searchItems');
     const includePartidas = searchParams.get('includePartidas');
     const includeDocumento = searchParams.get('includeDocumento');
     const limit = searchParams.get('limit');
     const offset = searchParams.get('offset');
 
-    // 3. Validar parámetros (al menos uno debe estar presente)
+    // ✨ Caso especial: búsqueda de items (autocomplete)
+    if (searchItems) {
+      // Validar mínimo 2 caracteres
+      if (searchItems.length < 2) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'searchItems debe tener al menos 2 caracteres' 
+          },
+          { status: 400 }
+        );
+      }
+
+      // Obtener token válido de Salesforce
+      const salesforceToken = await getValidToken();
+
+      // Construir URL con parámetros para búsqueda de items
+      const itemsParams = new URLSearchParams();
+      itemsParams.set('searchItems', searchItems);
+      if (limit) {
+        const limitNum = Math.min(parseInt(limit), 10); // Máximo 10 para búsqueda
+        itemsParams.set('limit', limitNum.toString());
+      } else {
+        itemsParams.set('limit', '5'); // Default 5 para búsqueda
+      }
+
+      const apexUrl = `${SALESFORCE_INSTANCE_URL}/services/apexrest/portal/ordenes?${itemsParams.toString()}`;
+
+      console.log('[Ordenes Compra GET - Search Items] Calling Salesforce:', apexUrl);
+
+      const sfResponse = await fetch(apexUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${salesforceToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!sfResponse.ok) {
+        const errorText = await sfResponse.text();
+        console.error('[Ordenes Compra GET - Search Items] Salesforce error:', sfResponse.status, errorText);
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Error al buscar items en Salesforce',
+            details: errorText 
+          },
+          { status: sfResponse.status }
+        );
+      }
+
+      let data: { items?: Array<{ Id: string; Descripción__c?: string }>; count?: number };
+      try {
+        const text = await sfResponse.text();
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[Ordenes Compra GET - Search Items] JSON parse error:', parseError);
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Error al parsear respuesta de Salesforce' 
+          },
+          { status: 502 }
+        );
+      }
+
+      console.log('[Ordenes Compra GET - Search Items] Success, found:', data.count || 0, 'items');
+      return NextResponse.json({
+        success: true,
+        items: data.items || [],
+        count: data.count || 0,
+      });
+    }
+
+    // 3. Validar parámetros para búsqueda de órdenes (al menos uno debe estar presente)
     if (!id && !accountId && !participanteId && !proyectoId) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Se requiere "id", "accountId", "participanteId" o "proyectoId" como parámetro' 
+          error: 'Se requiere "id", "accountId", "participanteId", "proyectoId" o "searchItems" como parámetro' 
         },
         { status: 400 }
       );
