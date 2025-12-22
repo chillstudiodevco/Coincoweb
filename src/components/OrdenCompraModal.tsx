@@ -117,24 +117,6 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
 
       const result = await response.json();
 
-      console.log('🔍 [Autocomplete] Búsqueda:', term);
-      console.log('📦 [Autocomplete] Respuesta completa:', result);
-      console.log('📋 [Autocomplete] Items recibidos:', result.items);
-      
-      // Log detallado de cada item
-      if (result.items && result.items.length > 0) {
-        console.log('🔍 [Autocomplete] Primer item completo:', result.items[0]);
-        console.log('🔍 [Autocomplete] Keys del primer item:', Object.keys(result.items[0]));
-        result.items.forEach((item: any, idx: number) => {
-          console.log(`📦 Item ${idx}:`, {
-            Id: item.Id,
-            'Descripción__c': item.Descripción__c,
-            'Descripcion__c': item.Descripcion__c,
-            allKeys: Object.keys(item)
-          });
-        });
-      }
-
       if (response.ok && result.success) {
         setSuggestions(result.items || []);
         console.log('✅ [Autocomplete] Sugerencias guardadas:', result.items?.length || 0);
