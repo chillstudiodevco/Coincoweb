@@ -70,14 +70,6 @@ export default function ProviderDashboard() {
 
   const [projects, setProjects] = useState<Project[]>([]);
 
-  // Detectar si el usuario es director de obra en al menos UN proyecto
-  const isDirectorDeObra = useMemo(() => {
-    return projects.some(proyecto => 
-      proyecto.participants?.some(p => p.Aprobardor_de_ordenes__c === true)
-    );
-  }, [projects]);
-
-
   const getAccountProjectsFromSalesforce = useCallback((sf: unknown): Project[] => {
     if (!sf || typeof sf !== 'object') return [];
     const acct = (sf as Record<string, unknown>)['account'];
