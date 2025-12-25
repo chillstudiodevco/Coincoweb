@@ -37,7 +37,10 @@ export default function OrdenCompraSection({
   // Obtener lista única de proyectos para el filtro
   const uniqueProjects = useMemo(() => {
     const projects = ordenes
-      .map(o => ({ id: o.Proyecto__c, name: o.Proyecto__r?.Name }))
+      .map(o => ({ 
+        id: o.Proyecto__c, 
+        name: o.Proyecto__r?.Objeto_del_contrato__c || o.Proyecto__r?.Name || 'Sin descripción'
+      }))
       .filter((p, index, self) => 
         p.id && p.name && self.findIndex(x => x.id === p.id) === index
       );

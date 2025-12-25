@@ -234,63 +234,67 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
 
   useEffect(() => {
     if (isOpen && ordenId) {
-      // Cargar datos de Salesforce desde localStorage (incluye proyectos y participantes)
+      // Cargar datos desde localStorage
       try {
-        const storedData = localStorage.getItem('salesforceData');
-        if (storedData) {
-          setSalesforceData(JSON.parse(storedData));
-        }
         const storedUser = localStorage.getItem('user');
+        console.log('[OrdenCompraDetailModal] 📦 storedUser from localStorage:', storedUser ? 'exists' : 'null');
+        
         if (storedUser) {
           const parsed = JSON.parse(storedUser);
-          setSalesforceData(parsed);
           const metadata = parsed?.user_metadata;
-          if (metadata?.salesforce_id) {
-            setCurrentUserId(metadata.salesforce_id);
+          const userId = metadata?.salesforce_id || null;
+          setCurrentUserId(userId);
+          
+          console.log('[OrdenCompraDetailModal] 👤 User ID:', userId);
+          
+          // Los datos de salesforce están dentro del objeto user
+          const sfData = parsed?.salesforce;
+          
+          if (sfData) {
+            setSalesforceData(sfData);
+          } else {
+            console.warn('[OrdenCompraDetailModal] ⚠️ No salesforce data in user object');
           }
+        } else {
+          console.warn('[OrdenCompraDetailModal] ⚠️ No user in localStorage');
         }
       } catch (err) {
-        console.error('Error loading salesforce data or user from localStorage:', err);
+        console.error('[OrdenCompraDetailModal] ❌ Error loading data from localStorage:', err);
       }
       fetchOrdenDetail();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, ordenId]);
 
-  // Verificar si el usuario actual es Director de Obra (Aprobador) en el proyecto de esta orden
+  // Verificar si el usuario es Director de Obra (Aprobador) en el proyecto específico de esta orden
   const isUserDirectorDeObra = useMemo(() => {
     if (!orden?.Proyecto__c || !salesforceData?.account?.projects || !currentUserId) {
       return false;
     }
+
     // Buscar el proyecto de la orden
     const proyecto = salesforceData.account.projects.find(
       (p) => p.Id === orden.Proyecto__c
     );
 
-    if (!proyecto || !proyecto.participants) {
+    if (!proyecto?.participants) {
       return false;
     }
 
-    // Verificar si el usuario actual es participante aprobador
-    return proyecto.participants.some(
+    // Verificar si el usuario es aprobador EN ESTE PROYECTO ESPECÍFICO
+    const esAprobadorEnEsteProyecto = proyecto.participants.some(
       (p) => p.Aprobardor_de_ordenes__c === true && p.Cuenta__c === currentUserId
     );
-  }, [orden, salesforceData, currentUserId]);
 
-  // DEBUG: Mostrar el objeto salesforceData completo cada vez que cambie
-  useEffect(() => {
-    console.log('DEBUG salesforceData:', salesforceData);
-  }, [salesforceData]);
-
-  // DEBUG: Mostrar valores clave para depuración
-  useEffect(() => {
-    console.log('DEBUG Director:', {
-      ordenProyecto: orden?.Proyecto__c,
-      salesforceProjects: salesforceData?.account?.projects,
+    console.log('[OrdenCompraDetailModal] Verificación aprobador en proyecto:', {
+      proyectoId: proyecto.Id,
+      proyectoName: proyecto.Name,
       currentUserId,
-      isUserDirectorDeObra
+      esAprobador: esAprobadorEnEsteProyecto
     });
-  }, [orden, salesforceData, currentUserId, isUserDirectorDeObra]);
+
+    return esAprobadorEnEsteProyecto;
+  }, [orden, salesforceData, currentUserId]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -471,9 +475,8 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                 </div>
               )}
 
-              {/* Formulario de Aprobación para Director de Obra - Estado: Requisición generada */}
-              {/* Mostrar SOLO si: 1) Estado = "Requisición generada" Y 2) Usuario es Director de Obra del proyecto */}
-              {orden.Estado__c === 'Requisición generada' && isUserDirectorDeObra && (
+              {/* Formulario de aprobación de director - Inline cuando se activa */}
+              {showDirectorApprovalForm && orden.Estado__c === 'Requisición generada' && isUserDirectorDeObra && (
                 <div className="bg-blue-50 rounded-lg p-6 border-2 border-blue-300">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
@@ -487,68 +490,58 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                     </div>
                   </div>
 
-                  {!showDirectorApprovalForm ? (
-                    <button
-                      onClick={() => setShowDirectorApprovalForm(true)}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-bold shadow-lg"
-                    >
-                      <i className="fas fa-check-circle"></i>
-                      Aprobar Requisición
-                    </button>
-                  ) : (
-                    <form onSubmit={handleSubmitDirectorApproval} className="space-y-4">
-                      <div className="bg-white rounded-lg p-5 border border-blue-200 space-y-4">
-                        <h6 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                          <i className="fas fa-comment-alt text-blue-600"></i>
-                          Observaciones (Opcional)
-                        </h6>
-                        
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">
-                            Comentarios sobre la requisición
-                          </label>
-                          <textarea
-                            value={observacionesDirector}
-                            onChange={(e) => setObservacionesDirector(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Ej: Aprobado según presupuesto del proyecto"
-                            rows={4}
-                          />
-                        </div>
+                  <form onSubmit={handleSubmitDirectorApproval} className="space-y-4">
+                    <div className="bg-white rounded-lg p-5 border border-blue-200 space-y-4">
+                      <h6 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <i className="fas fa-comment-alt text-blue-600"></i>
+                        Observaciones (Opcional)
+                      </h6>
+                      
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Comentarios sobre la requisición
+                        </label>
+                        <textarea
+                          value={observacionesDirector}
+                          onChange={(e) => setObservacionesDirector(e.target.value)}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="Ej: Aprobado según presupuesto del proyecto"
+                          rows={4}
+                        />
                       </div>
+                    </div>
 
-                      <div className="flex gap-3">
-                        <button
-                          type="submit"
-                          disabled={approvingDirector}
-                          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {approvingDirector ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                              Aprobando...
-                            </>
-                          ) : (
-                            <>
-                              <i className="fas fa-check-double"></i>
-                              Confirmar Aprobación
-                            </>
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowDirectorApprovalForm(false);
-                            setError(null);
-                          }}
-                          disabled={approvingDirector}
-                          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold disabled:opacity-50"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </form>
-                  )}
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={approvingDirector}
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {approvingDirector ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            Aprobando...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-check-double"></i>
+                            Confirmar Aprobación
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDirectorApprovalForm(false);
+                          setError(null);
+                        }}
+                        disabled={approvingDirector}
+                        className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
                 </div>
               )}
 
@@ -906,6 +899,16 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
             </div>
           )}
           <div className="flex gap-3 ml-auto">
+            {/* Botón de aprobar requisición para Director de Obra */}
+            {orden?.Estado__c === 'Requisición generada' && isUserDirectorDeObra && !showDirectorApprovalForm && (
+              <button
+                onClick={() => setShowDirectorApprovalForm(true)}
+                className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium shadow-md"
+              >
+                <i className="fas fa-check-circle"></i>
+                Aprobar Requisición
+              </button>
+            )}
             <button
               onClick={onClose}
               className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"

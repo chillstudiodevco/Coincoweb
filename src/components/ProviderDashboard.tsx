@@ -70,7 +70,7 @@ export default function ProviderDashboard() {
 
   const [projects, setProjects] = useState<Project[]>([]);
 
-  // Detectar si el usuario es director de obra (tiene al menos un participante con Aprobardor_de_ordenes__c = true)
+  // Detectar si el usuario es director de obra en al menos UN proyecto
   const isDirectorDeObra = useMemo(() => {
     return projects.some(proyecto => 
       proyecto.participants?.some(p => p.Aprobardor_de_ordenes__c === true)
@@ -493,8 +493,9 @@ export default function ProviderDashboard() {
         try { 
           localStorage.setItem('user', JSON.stringify({ 
             ...(payload.user ?? {}), 
-            salesforce: payload.salesforce ?? null 
+            salesforce: payload.salesforce ?? null
           })); 
+          localStorage.setItem('salesforceData', JSON.stringify(payload.salesforce ?? null));
         } catch {}
 
       } catch (err) {
@@ -736,21 +737,6 @@ export default function ProviderDashboard() {
                   projectsPerPage={projectsPerPage}
                   onPageChange={setCurrentPage}
                 />
-
-                {/* Mensaje informativo para Directores de Obra */}
-                {isDirectorDeObra && (
-                  <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <i className="fas fa-info-circle text-blue-600 text-xl mt-1"></i>
-                      <div>
-                        <h3 className="font-bold text-blue-900 mb-1">Director de Obra</h3>
-                        <p className="text-blue-800 text-sm">
-                          Como Director de Obra, puedes ver y aprobar todas las órdenes de compra de tus proyectos en la sección &quot;Órdenes de Compra&quot;.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 

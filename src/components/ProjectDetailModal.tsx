@@ -12,6 +12,7 @@ interface Participant {
   Id?: string | null;
   Tipo_de_tercero__c?: string | null;
   Valor_contrato__c?: number | null;
+  Aprobardor_de_ordenes__c?: boolean | null;
 }
 
 interface Project {
@@ -52,37 +53,75 @@ export default function ProjectDetailModal({
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) return;
 
-      // Obtener los IDs de participantes del usuario en este proyecto
-      const myParticipantIds = project.participants
-        ?.filter(p => String(p.Cuenta__c) === String(accountId))
-        .map(p => p.Id)
-        .filter(Boolean) || [];
+      // Verificar si el usuario es Director de Obra (Aprobador) en este proyecto
+      const isDirectorDeObra = project.participants?.some(
+        p => String(p.Cuenta__c) === String(accountId) && p.Aprobardor_de_ordenes__c === true
+      ) || false;
 
-      if (myParticipantIds.length === 0) {
-        console.log('[ProjectDetailModal] No participant IDs found for this user in project');
-        setOrdenes([]);
+      console.log('[ProjectDetailModal] User role:', {
+        accountId,
+        projectId: project.Id,
+        isDirectorDeObra,
+        participantsCount: project.participants?.length || 0
+      });
+
+      let response;
+      
+      if (isDirectorDeObra) {
+        // Si es director de obra, obtener TODAS las órdenes del proyecto
+        console.log('[ProjectDetailModal] Fetching orders by proyectoId (Director de Obra)');
+        response = await fetch(
+          `/api/salesforce/ordenes-compra?proyectoId=${project.Id}&limit=100`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          }
+        );
+      } else {
+        // Si es participante regular, obtener solo sus órdenes
+        console.log('[ProjectDetailModal] Fetching orders by accountId (Participante)');
+        
+        // Obtener los IDs de participantes del usuario en este proyecto
+        const myParticipantIds = project.participants
+          ?.filter(p => String(p.Cuenta__c) === String(accountId))
+          .map(p => p.Id)
+          .filter(Boolean) || [];
+
+        if (myParticipantIds.length === 0) {
+          console.log('[ProjectDetailModal] No participant IDs found for this user in project');
+          setOrdenes([]);
+          setLoading(false);
+          return;
+        }
+
+        // Obtener todas las órdenes del usuario y filtrar por participantes de este proyecto
+        response = await fetch(
+          `/api/salesforce/ordenes-compra?accountId=${accountId}&limit=100`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          }
+        );
+
+        const result = await response.json();
+        if (result.success) {
+          const allOrdenes = result.data?.ordenes || [];
+          // Filtrar solo las órdenes que pertenecen a los participantes de este proyecto
+          const projectOrdenes = allOrdenes.filter((orden: OrdenDeCompra) => 
+            myParticipantIds.includes(orden.Participante__c)
+          );
+          setOrdenes(projectOrdenes);
+        }
         setLoading(false);
         return;
       }
 
-      // Obtener todas las órdenes del usuario y filtrar por participantes de este proyecto
-      const response = await fetch(
-        `/api/salesforce/ordenes-compra?accountId=${accountId}&limit=100`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        }
-      );
-
+      // Procesar respuesta para director de obra
       const result = await response.json();
       if (result.success) {
-        const allOrdenes = result.data?.ordenes || [];
-        // Filtrar solo las órdenes que pertenecen a los participantes de este proyecto
-        const projectOrdenes = allOrdenes.filter((orden: OrdenDeCompra) => 
-          myParticipantIds.includes(orden.Participante__c)
-        );
-        setOrdenes(projectOrdenes);
+        setOrdenes(result.data?.ordenes || []);
       }
     } catch (error) {
       console.error('Error loading project orders:', error);
@@ -214,14 +253,14 @@ export default function ProjectDetailModal({
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h5 className="font-bold text-gray-800">{par.Name || 'Sin nombre'}</h5>
+                          <h5 className="font-bold text-gray-800">{stripHtml(par.Descripci_n_del_servicio__c || 'Sin descripción')}</h5>
                           {par.Tipo_de_tercero__c && (
                             <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
                               {par.Tipo_de_tercero__c}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600">{stripHtml(par.Descripci_n_del_servicio__c || '')}</p>
+                        <p className="text-sm text-gray-600">{par.Name || 'Sin nombre'}</p>
                         {par.CuentaName && (
                           <p className="text-xs text-gray-500 mt-1">
                             <i className="fas fa-building mr-1"></i>

@@ -165,11 +165,11 @@ export default function ProyectosSection({
                           <i className="fas fa-project-diagram text-green-600 text-lg"></i>
                         </div>
                         <div>
-                          <h4 className="text-lg font-bold text-gray-800">{p.Name ?? 'Sin nombre'}</h4>
+                          <h4 className="text-lg font-bold text-gray-800 line-clamp-2">{p.Objeto_del_contrato__c ?? 'Sin descripción'}</h4>
                           <p className="text-xs text-gray-500">{(p.participants ?? []).length} participante(s)</p>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">{p.Objeto_del_contrato__c ?? 'Sin descripción'}</p>
+                      <p className="text-sm text-gray-600">{p.Name ?? 'Sin nombre'}</p>
                     </div>
                     <div className="text-left sm:text-right">
                       <p className="text-xs text-gray-600 font-semibold uppercase">Mi Contrato</p>
