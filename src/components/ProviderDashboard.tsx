@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import supabaseClient from '@/lib/supabase/client';
 import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import OrdenCompraDetailModal from './OrdenCompraDetailModal';
