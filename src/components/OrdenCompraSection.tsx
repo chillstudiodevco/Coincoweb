@@ -290,7 +290,7 @@ export default function OrdenCompraSection({
                   </div>
                   <p className="text-gray-600 text-xs sm:text-sm">
                     <i className="fas fa-user-tie mr-2"></i>
-                    Participante: {orden.Participante__r?.Name || 'N/A'}
+                    Participante: {orden.Participante__r?.Cuenta__r?.Name || 'N/A'}
                   </p>
                   {orden.Proveedor__r?.Cuenta__r?.Name && (
                     <p className="text-gray-600 text-xs sm:text-sm mt-1">

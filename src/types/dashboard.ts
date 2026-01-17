@@ -82,10 +82,14 @@ export interface OrdenDeCompra {
   Participante__r?: {
     Id?: string;
     Name?: string;
+    Cuenta__r?: {
+      Name?: string;
+    };
     Descripci_n_del_servicio__c?: string;
     Aprobardor_de_ordenes__c?: boolean;
     Tipo_de_tercero__c?: string;
   };
+
   Proveedor__r?: {
     Id?: string;
     Name?: string;

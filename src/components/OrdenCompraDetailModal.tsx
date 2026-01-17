@@ -412,7 +412,7 @@ export default function OrdenCompraDetailModal({ isOpen, onClose, ordenId }: Ord
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                   <div>
                     <p className="text-xs text-gray-600 font-semibold uppercase">Participante</p>
-                    <p className="text-sm font-medium text-gray-800">{orden.Participante__r?.Name || 'N/A'}</p>
+                    <p className="text-sm font-medium text-gray-800">{orden.Participante__r?.Cuenta__r?.Name || 'N/A'}</p>
                   </div>
                   {orden.Proveedor__r && (
                     <div>
