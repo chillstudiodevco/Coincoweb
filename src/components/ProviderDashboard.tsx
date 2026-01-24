@@ -30,22 +30,22 @@ export default function ProviderDashboard() {
   const [salesforceData, setSalesforceData] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
-  
+
   // Estado para órdenes de compra
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>([]);
   const [loadingOrdenes, setLoadingOrdenes] = useState(false);
-  
+
   // Estado para paginación de proyectos
   const [currentPage, setCurrentPage] = useState(1);
   const projectsPerPage = 6;
-  
+
   // Estado para paginación de órdenes de compra
   const [currentOrdenesPage, setCurrentOrdenesPage] = useState(1);
   const ordenesPerPage = 6;
-  
+
   // Estado para el proyecto seleccionado en el modal de orden de compra
   const [selectedProjectForOrden, setSelectedProjectForOrden] = useState<string>('');
-  
+
   // Projects returned by Salesforce -> account.projects
   type Participant = {
     Descripci_n_del_servicio__c?: string | null;
@@ -116,11 +116,11 @@ export default function ProviderDashboard() {
   // Obtener proveedores de materiales de un proyecto específico
   const getProveedoresByProject = useCallback((projectId: string) => {
     const project = projects.find(p => String(p.Id) === String(projectId));
-    
+
     if (!project || !project.materialProviders) {
       return [];
     }
-    
+
     return project.materialProviders.map(proveedor => ({
       id: proveedor.Id || proveedor.Name || '',
       nombre: proveedor.CuentaName || proveedor.Descripci_n_del_servicio__c || proveedor.Name || 'Sin nombre'
@@ -134,10 +134,10 @@ export default function ProviderDashboard() {
   // Función para cargar órdenes de compra desde la API
   const fetchOrdenes = useCallback(async () => {
     if (!currentUser || typeof currentUser !== 'object') return;
-    
+
     const metadata = (currentUser as { user_metadata?: Record<string, unknown> }).user_metadata;
     const accountId = metadata?.salesforce_id as string | undefined;
-    
+
     if (!accountId) {
       console.warn('⚠️ [Dashboard] No se encontró salesforce_id (accountId) en user_metadata');
       return;
@@ -181,7 +181,7 @@ export default function ProviderDashboard() {
 
       if (proyectosDirector.length > 0) {
         console.log(`🔄 [Dashboard] Cargando órdenes de ${proyectosDirector.length} proyectos como Director de Obra`);
-        
+
         const ordenesDirectorPromises = proyectosDirector.map(async (proyecto) => {
           try {
             const respProyecto = await fetch(
@@ -254,7 +254,7 @@ export default function ProviderDashboard() {
   const handleCreateOrdenCompra = async (data: OrdenCompraFormData) => {
     try {
       console.log('📝 [Dashboard] Creando orden de compra:', data);
-      
+
       // Obtener el token de sesión
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) {
@@ -264,42 +264,19 @@ export default function ProviderDashboard() {
 
       // ✅ Buscar el ID del participante del usuario en el proyecto seleccionado
       const proyecto = projects.find(p => String(p.Id) === String(data.proyectoId));
-      
+
       if (!proyecto) {
         console.error('❌ [Dashboard] Proyecto no encontrado:', data.proyectoId);
         alert('Error: No se encontró el proyecto seleccionado.');
         return;
       }
 
-      // Obtener el salesforce_id de la cuenta del usuario
-      const metadata = (currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata;
-      const accountId = metadata?.salesforce_id as string | undefined;
-      
-      if (!accountId) {
-        console.error('❌ [Dashboard] No se encontró salesforce_id del usuario');
-        alert('Error: No se pudo identificar el usuario. Por favor, inicia sesión nuevamente.');
-        return;
-      }
-
-      // ✅ Buscar el participante del usuario en este proyecto
-      const participanteDelUsuario = proyecto.participants?.find(
-        p => String(p.Cuenta__c) === String(accountId)
-      );
-
-      if (!participanteDelUsuario || !participanteDelUsuario.Id) {
-        console.error('❌ [Dashboard] No se encontró participante del usuario en el proyecto');
-        console.error('Account ID:', accountId);
-        console.error('Participantes del proyecto:', proyecto.participants);
-        alert('Error: No se encontró tu participación en este proyecto. Por favor, contacta al administrador.');
-        return;
-      }
-
-      console.log('✅ [Dashboard] Participante encontrado:', participanteDelUsuario.Id, participanteDelUsuario.Name);
+      // (La validación del participante ya se hizo en el modal al seleccionarlo)
 
       // Crear payload con la nueva estructura: orden + partidas
       const payload = {
         orden: {
-          Participante__c: participanteDelUsuario.Id, // ✅ ID del participante en este proyecto
+          Participante__c: data.participanteId, // ✅ ID del participante seleccionado por el usuario
           Proveedor__c: data.proveedorId, // ← Proveedor seleccionado
           Proyecto__c: data.proyectoId,
           Fecha__c: new Date().toISOString().split('T')[0], // YYYY-MM-DD
@@ -337,10 +314,10 @@ export default function ProviderDashboard() {
 
       console.log('✅ [Dashboard] Orden creada exitosamente:', result.data);
       alert('¡Orden de compra creada exitosamente!');
-      
+
       // Recargar lista de órdenes
       await fetchOrdenes();
-      
+
       // Cerrar modal
       setShowOrdenCompraModal(false);
 
@@ -403,21 +380,21 @@ export default function ProviderDashboard() {
     try {
       // 1. Limpiar localStorage primero
       localStorage.removeItem('user');
-      
+
       // 2. Cerrar sesión en Supabase (esto limpia las cookies automáticamente)
       const { error } = await supabaseClient.auth.signOut();
-      
+
       if (error) {
         console.error('[Logout] Error al cerrar sesión:', error);
       }
-      
+
       // 3. Redirigir después de limpiar todo
       window.location.href = '/';
-      
+
     } catch (err) {
       console.error('[Logout] Error inesperado:', err);
       // Forzar limpieza y redirect incluso si hay error
-      try { localStorage.clear(); } catch {}
+      try { localStorage.clear(); } catch { }
       window.location.href = '/';
     }
   };
@@ -428,7 +405,7 @@ export default function ProviderDashboard() {
       try {
         // Verificar sesión de Supabase
         const { data: { session } } = await supabaseClient.auth.getSession();
-        
+
         if (!session) {
           console.log('[Dashboard] No session found, redirecting to home');
           window.location.href = '/';
@@ -464,7 +441,7 @@ export default function ProviderDashboard() {
         const res = await fetch('/api/salesforce/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         if (!res.ok) {
           console.warn('[Dashboard] Failed to fetch salesforce data');
           setLoading(false);
@@ -474,21 +451,21 @@ export default function ProviderDashboard() {
         const payload = await res.json();
         setCurrentUser(payload.user ?? null);
         setSalesforceData(payload.salesforce ?? null);
-        
+
         try {
           const projs = getAccountProjectsFromSalesforce(payload.salesforce);
           setProjects(projs);
         } catch {
           // ignore
         }
-        
-        try { 
-          localStorage.setItem('user', JSON.stringify({ 
-            ...(payload.user ?? {}), 
+
+        try {
+          localStorage.setItem('user', JSON.stringify({
+            ...(payload.user ?? {}),
             salesforce: payload.salesforce ?? null
-          })); 
+          }));
           localStorage.setItem('salesforceData', JSON.stringify(payload.salesforce ?? null));
-        } catch {}
+        } catch { }
 
       } catch (err) {
         console.error('[Dashboard] Error verificando autenticación:', err);
@@ -536,17 +513,17 @@ export default function ProviderDashboard() {
         <div className="text-center">
           <div className="relative mb-8">
             {/* Spinner exterior */}
-            <div 
+            <div
               className="animate-spin rounded-full h-20 w-20 border-4 border-gray-200 mx-auto"
               style={{ borderTopColor: '#006935' }}
             ></div>
             {/* Spinner interior (rotación inversa) */}
-            <div 
+            <div
               className="absolute inset-0 flex items-center justify-center"
             >
-              <div 
+              <div
                 className="animate-spin rounded-full h-12 w-12 border-4 border-transparent"
-                style={{ 
+                style={{
                   borderTopColor: '#4CAF50',
                   animationDirection: 'reverse',
                   animationDuration: '1s'
@@ -564,23 +541,23 @@ export default function ProviderDashboard() {
           </div>
           {/* Puntos animados */}
           <div className="flex justify-center items-center space-x-2 mt-4">
-            <div 
+            <div
               className="w-2 h-2 rounded-full animate-bounce"
-              style={{ 
+              style={{
                 backgroundColor: '#006935',
                 animationDelay: '0ms'
               }}
             ></div>
-            <div 
+            <div
               className="w-2 h-2 rounded-full animate-bounce"
-              style={{ 
+              style={{
                 backgroundColor: '#006935',
                 animationDelay: '150ms'
               }}
             ></div>
-            <div 
+            <div
               className="w-2 h-2 rounded-full animate-bounce"
-              style={{ 
+              style={{
                 backgroundColor: '#006935',
                 animationDelay: '300ms'
               }}
@@ -596,6 +573,25 @@ export default function ProviderDashboard() {
     return null;
   }
 
+  // Helper para obtener los roles/servicios del usuario en un proyecto
+  const getUserParticipants = (projectId: string) => {
+    const project = projects.find(p => p.Id === projectId);
+    if (!project) return [];
+
+    // Intentar obtener ID de diferentes lugares posibles
+    const userAny = currentUser as any;
+    const accountId = userAny?.user_metadata?.salesforce_id || userAny?.salesforce_id || (salesforceData as any)?.id;
+
+    if (!accountId) return [];
+
+    return (project.participants || [])
+      .filter(p => String(p.Cuenta__c) === String(accountId) && p.Id)
+      .map(p => ({
+        id: p.Id!,
+        descripcion: p.Descripci_n_del_servicio__c || p.Name || 'Rol sin descripción'
+      }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header del Dashboard */}
@@ -603,7 +599,7 @@ export default function ProviderDashboard() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{backgroundColor: '#006935'}}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#006935' }}>
                 <i className="fas fa-user-shield text-white text-xl"></i>
               </div>
               <div>
@@ -611,7 +607,7 @@ export default function ProviderDashboard() {
                 <p className="text-gray-600">Bienvenido, {displayCompany()}</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-300 cursor-pointer"
             >
@@ -631,10 +627,9 @@ export default function ProviderDashboard() {
                 {enabledSections.dashboard && (
                   <button
                     onClick={() => setActiveSection('dashboard')}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                      activeSection === 'dashboard' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    style={activeSection === 'dashboard' ? {backgroundColor: '#006935'} : {}}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${activeSection === 'dashboard' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    style={activeSection === 'dashboard' ? { backgroundColor: '#006935' } : {}}
                   >
                     <i className="fas fa-tachometer-alt mr-3"></i>
                     Dashboard
@@ -643,10 +638,9 @@ export default function ProviderDashboard() {
                 {enabledSections.requisitions && (
                   <button
                     onClick={() => setActiveSection('requisitions')}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                      activeSection === 'requisitions' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    style={activeSection === 'requisitions' ? {backgroundColor: '#006935'} : {}}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${activeSection === 'requisitions' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    style={activeSection === 'requisitions' ? { backgroundColor: '#006935' } : {}}
                   >
                     <i className="fas fa-clipboard-list mr-3"></i>
                     Requisiciones
@@ -655,10 +649,9 @@ export default function ProviderDashboard() {
                 {enabledSections.purchaseOrders && (
                   <button
                     onClick={() => setActiveSection('purchase-orders')}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                      activeSection === 'purchase-orders' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    style={activeSection === 'purchase-orders' ? {backgroundColor: '#006935'} : {}}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${activeSection === 'purchase-orders' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    style={activeSection === 'purchase-orders' ? { backgroundColor: '#006935' } : {}}
                   >
                     <i className="fas fa-shopping-cart mr-3"></i>
                     Órdenes de Compra
@@ -667,10 +660,9 @@ export default function ProviderDashboard() {
                 {enabledSections.invoices && (
                   <button
                     onClick={() => setActiveSection('invoices')}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                      activeSection === 'invoices' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    style={activeSection === 'invoices' ? {backgroundColor: '#006935'} : {}}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${activeSection === 'invoices' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    style={activeSection === 'invoices' ? { backgroundColor: '#006935' } : {}}
                   >
                     <i className="fas fa-file-invoice-dollar mr-3"></i>
                     Facturas
@@ -679,10 +671,9 @@ export default function ProviderDashboard() {
                 {enabledSections.profile && (
                   <button
                     onClick={() => setActiveSection('profile')}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${
-                      activeSection === 'profile' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    style={activeSection === 'profile' ? {backgroundColor: '#006935'} : {}}
+                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer ${activeSection === 'profile' ? 'text-white' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    style={activeSection === 'profile' ? { backgroundColor: '#006935' } : {}}
                   >
                     <i className="fas fa-user-cog mr-3"></i>
                     Mi Perfil
@@ -697,7 +688,7 @@ export default function ProviderDashboard() {
             {activeSection === 'dashboard' && (
               <div className="space-y-8">
                 <h2 className="text-3xl font-bold text-gray-800">Resumen General</h2>
-                
+
                 {/* Estadísticas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
@@ -709,13 +700,13 @@ export default function ProviderDashboard() {
                       <i className="fas fa-shopping-cart text-green-500 text-2xl"></i>
                     </div>
                   </div>
-                  <div className="bg-white rounded-xl shadow-lg p-6 border-l-4" style={{borderColor: '#006935'}}>
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-l-4" style={{ borderColor: '#006935' }}>
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-600 text-sm">Proyectos Asociados</p>
-                        <p className="text-3xl font-bold" style={{color: '#006935'}}>{projects.length}</p>
+                        <p className="text-3xl font-bold" style={{ color: '#006935' }}>{projects.length}</p>
                       </div>
-                      <i className="fas fa-briefcase text-2xl" style={{color: '#006935'}}></i>
+                      <i className="fas fa-briefcase text-2xl" style={{ color: '#006935' }}></i>
                     </div>
                   </div>
                 </div>
@@ -739,7 +730,7 @@ export default function ProviderDashboard() {
                   <button
                     onClick={() => setShowNewRequisitionModal(true)}
                     className="text-white px-6 py-3 rounded-lg transition-colors duration-300 flex items-center cursor-pointer hover:opacity-90"
-                    style={{backgroundColor: '#006935'}}
+                    style={{ backgroundColor: '#006935' }}
                   >
                     <i className="fas fa-plus mr-2"></i>
                     Nueva Requisición
@@ -801,7 +792,7 @@ export default function ProviderDashboard() {
             {activeSection === 'invoices' && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold text-gray-800">Mis Facturas</h2>
-                
+
                 <div className="grid gap-6">
                   {invoices.map((invoice) => (
                     <div key={invoice.id} className="bg-white rounded-xl shadow-lg p-6">
@@ -853,10 +844,10 @@ export default function ProviderDashboard() {
             {activeSection === 'profile' && (
               <div className="space-y-6">
                 <h2 className="text-3xl font-bold text-gray-800">Mi Perfil</h2>
-                
+
                 <div className="bg-white rounded-xl shadow-lg p-6">
                   <div className="flex items-center space-x-6 mb-6">
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{backgroundColor: '#006935'}}>
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: '#006935' }}>
                       <i className="fas fa-building text-white text-2xl"></i>
                     </div>
                     <div>
@@ -864,7 +855,7 @@ export default function ProviderDashboard() {
                       <p className="text-gray-600">Proveedor</p>
                     </div>
                   </div>
-                  
+
                   <div className="text-center py-8 text-gray-500">
                     <i className="fas fa-info-circle text-4xl mb-4"></i>
                     <p>Información de perfil próximamente disponible</p>
@@ -891,30 +882,30 @@ export default function ProviderDashboard() {
                 </button>
               </div>
             </div>
-            
+
             <form onSubmit={handleNewRequisition} className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Título del Material</label>
                 <input
                   type="text"
                   value={newRequisition.title}
-                  onChange={(e) => setNewRequisition({...newRequisition, title: e.target.value})}
+                  onChange={(e) => setNewRequisition({ ...newRequisition, title: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
-                  style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
+                  style={{ '--tw-ring-color': '#006935' } as React.CSSProperties}
                   onFocus={(e) => e.target.style.borderColor = '#006935'}
                   onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   placeholder="Ej: Cemento Portland Tipo I"
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
                 <textarea
                   value={newRequisition.description}
-                  onChange={(e) => setNewRequisition({...newRequisition, description: e.target.value})}
+                  onChange={(e) => setNewRequisition({ ...newRequisition, description: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
-                  style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
+                  style={{ '--tw-ring-color': '#006935' } as React.CSSProperties}
                   onFocus={(e) => e.target.style.borderColor = '#006935'}
                   onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   placeholder="Describe las especificaciones del material..."
@@ -922,31 +913,31 @@ export default function ProviderDashboard() {
                   required
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
                   <input
                     type="number"
                     value={newRequisition.quantity}
-                    onChange={(e) => setNewRequisition({...newRequisition, quantity: parseInt(e.target.value)})}
+                    onChange={(e) => setNewRequisition({ ...newRequisition, quantity: parseInt(e.target.value) })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
-                    style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
+                    style={{ '--tw-ring-color': '#006935' } as React.CSSProperties}
                     onFocus={(e) => e.target.style.borderColor = '#006935'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     min="1"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Precio Unitario (COP)</label>
                   <input
                     type="number"
                     value={newRequisition.unitPrice}
-                    onChange={(e) => setNewRequisition({...newRequisition, unitPrice: parseFloat(e.target.value)})}
+                    onChange={(e) => setNewRequisition({ ...newRequisition, unitPrice: parseFloat(e.target.value) })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
-                    style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
+                    style={{ '--tw-ring-color': '#006935' } as React.CSSProperties}
                     onFocus={(e) => e.target.style.borderColor = '#006935'}
                     onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                     min="0"
@@ -955,14 +946,14 @@ export default function ProviderDashboard() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Proyecto</label>
                 <select
                   value={newRequisition.project}
-                  onChange={(e) => setNewRequisition({...newRequisition, project: e.target.value})}
+                  onChange={(e) => setNewRequisition({ ...newRequisition, project: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
-                  style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
+                  style={{ '--tw-ring-color': '#006935' } as React.CSSProperties}
                   onFocus={(e) => e.target.style.borderColor = '#006935'}
                   onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   required
@@ -979,9 +970,9 @@ export default function ProviderDashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Descripción del servicio</label>
                 <select
                   value={newRequisition.service}
-                  onChange={(e) => setNewRequisition({...newRequisition, service: e.target.value})}
+                  onChange={(e) => setNewRequisition({ ...newRequisition, service: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:border-transparent"
-                  style={{'--tw-ring-color': '#006935'} as React.CSSProperties}
+                  style={{ '--tw-ring-color': '#006935' } as React.CSSProperties}
                   onFocus={(e) => e.target.style.borderColor = '#006935'}
                   onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                   required
@@ -992,7 +983,7 @@ export default function ProviderDashboard() {
                   ))}
                 </select>
               </div>
-              
+
               {newRequisition.quantity > 0 && newRequisition.unitPrice > 0 && (
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-lg font-bold text-gray-800">
@@ -1000,7 +991,7 @@ export default function ProviderDashboard() {
                   </p>
                 </div>
               )}
-              
+
               <div className="flex space-x-4">
                 <button
                   type="button"
@@ -1012,7 +1003,7 @@ export default function ProviderDashboard() {
                 <button
                   type="submit"
                   className="flex-1 text-white py-3 px-6 rounded-lg transition-colors duration-300 cursor-pointer hover:opacity-90"
-                  style={{backgroundColor: '#006935'}}
+                  style={{ backgroundColor: '#006935' }}
                 >
                   Crear Requisición
                 </button>
@@ -1028,6 +1019,7 @@ export default function ProviderDashboard() {
         onClose={() => setShowOrdenCompraModal(false)}
         onSubmit={handleCreateOrdenCompra}
         proveedores={selectedProjectForOrden ? getProveedoresByProject(selectedProjectForOrden) : []}
+        participantes={selectedProjectForOrden ? getUserParticipants(selectedProjectForOrden) : []}
         proyectos={projects.map(p => ({
           id: p.Id || '',
           nombre: p.Objeto_del_contrato__c || p.Name || 'Sin nombre'
