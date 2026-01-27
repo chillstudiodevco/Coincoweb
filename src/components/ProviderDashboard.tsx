@@ -579,8 +579,10 @@ export default function ProviderDashboard() {
     if (!project) return [];
 
     // Intentar obtener ID de diferentes lugares posibles
-    const userAny = currentUser as any;
-    const accountId = userAny?.user_metadata?.salesforce_id || userAny?.salesforce_id || (salesforceData as any)?.id;
+
+    const user = currentUser as { user_metadata?: { salesforce_id?: string }; salesforce_id?: string } | null;
+    const sfData = salesforceData as { id?: string } | null;
+    const accountId = user?.user_metadata?.salesforce_id || user?.salesforce_id || sfData?.id;
 
     if (!accountId) return [];
 
