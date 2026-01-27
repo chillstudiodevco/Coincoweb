@@ -55,11 +55,7 @@ async function getSalesforceToken(): Promise<string> {
     throw new Error('Faltan credenciales de Salesforce en variables de entorno');
   }
 
-  // DEBUG: Verificar longitudes y espacios (sin mostrar valores reales)
-  console.log(`🔍 [DEBUG] Login URL: '${loginUrl}'`);
-  console.log(`🔍 [DEBUG] Client ID length: ${clientId.length}, has whitespace: ${/\s/.test(clientId)}`);
-  console.log(`🔍 [DEBUG] Client Secret length: ${clientSecret.length}, has whitespace: ${/\s/.test(clientSecret)}`);
-  console.log(`🔍 [DEBUG] First 4 chars of Client ID: ${clientId.substring(0, 4)}...`);
+
 
   const response = await fetch(`${loginUrl}/services/oauth2/token`, {
     method: 'POST',
