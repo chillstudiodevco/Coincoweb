@@ -1,4 +1,4 @@
-# Script para obtener Access Token de Salesforce
+# Script para obtener Access Token de Salesforcee
 # Uso: .\scripts\get-salesforce-token.ps1
 
 Write-Host "[*] Obteniendo Access Token de Salesforce..." -ForegroundColor Cyan
