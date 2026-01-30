@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import supabaseClient from '@/lib/supabase/client';
 import OrdenCompraModal, { type OrdenCompraFormData } from './OrdenCompraModal';
 import OrdenCompraDetailModal from './OrdenCompraDetailModal';
+import LoadingModal from './LoadingModal';
 import ProjectDetailModal from './ProjectDetailModal';
 import OrdenCompraSection from './OrdenCompraSection';
 import ProyectosSection from './ProyectosSection';
@@ -30,6 +31,8 @@ export default function ProviderDashboard() {
   const [salesforceData, setSalesforceData] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Procesando...');
 
   // Estado para órdenes de compra
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>([]);
@@ -253,6 +256,8 @@ export default function ProviderDashboard() {
 
   const handleCreateOrdenCompra = async (data: OrdenCompraFormData) => {
     try {
+      setLoadingMessage('Generando orden de compra, por favor espere...');
+      setShowLoadingModal(true);
       console.log('📝 [Dashboard] Creando orden de compra:', data);
 
       // Obtener el token de sesión
@@ -313,20 +318,24 @@ export default function ProviderDashboard() {
       }
 
       console.log('✅ [Dashboard] Orden creada exitosamente:', result.data);
-      alert('¡Orden de compra creada exitosamente!');
+
+      // Mostrar mensaje de éxito en el modal de carga antes de cerrar
+      setLoadingMessage('¡Orden creada exitosamente!');
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Pequeña pausa para ver el éxito
 
       // Recargar lista de órdenes
       await fetchOrdenes();
 
       // Cerrar modal
       setShowOrdenCompraModal(false);
-
-      // Aquí podrías recargar la lista de órdenes si la tienes
-      // TODO: Implementar recarga de órdenes
+      setShowLoadingModal(false);
 
     } catch (error) {
       console.error('❌ [Dashboard] Error inesperado:', error);
+      setShowLoadingModal(false);
       alert('Error al crear la orden. Por favor, intenta nuevamente.');
+    } finally {
+      setShowLoadingModal(false);
     }
   };
 
@@ -1053,6 +1062,12 @@ export default function ProviderDashboard() {
         }}
         onGoToOrders={handleGoToOrders}
         accountId={(currentUser as { user_metadata?: Record<string, unknown> })?.user_metadata?.salesforce_id as string}
+      />
+
+      {/* Modal de Carga */}
+      <LoadingModal
+        isOpen={showLoadingModal}
+        message={loadingMessage}
       />
     </div>
   );
