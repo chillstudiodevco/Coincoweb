@@ -10,6 +10,7 @@ interface OrdenCompraModalProps {
   onSubmit: (data: OrdenCompraFormData) => void;
   proveedores: Array<{ id: string; nombre: string }>;
   proyectos: Array<{ id: string; nombre: string }>;
+  participantes: Array<{ id: string; descripcion: string }>;
   onProyectoChange?: (proyectoId: string) => void;
 }
 
@@ -19,6 +20,7 @@ interface ItemSuggestion {
 }
 
 export interface OrdenCompraFormData {
+  participanteId: string;
   proveedorId: string;
   proyectoId: string;
   detalle?: string;
@@ -39,8 +41,9 @@ const UNIDADES_MEDIDA: { value: UnidadMedida; label: string }[] = [
   { value: 'cuñete', label: 'Cuñete' },
 ];
 
-export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedores, proyectos, onProyectoChange }: OrdenCompraModalProps) {
+export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedores, proyectos, participantes, onProyectoChange }: OrdenCompraModalProps) {
   const [proveedorId, setProveedorId] = useState('');
+  const [participanteId, setParticipanteId] = useState('');
   const [proyectoId, setProyectoId] = useState('');
   const [detalle, setDetalle] = useState('');
   const [observaciones, setObservaciones] = useState('');
@@ -191,6 +194,11 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
       return;
     }
 
+    if (!participanteId) {
+      alert('Debe seleccionar un rol / servicio');
+      return;
+    }
+
     if (!proyectoId) {
       alert('Debe seleccionar un proyecto');
       return;
@@ -206,6 +214,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
     }
 
     onSubmit({
+      participanteId,
       proveedorId,
       proyectoId,
       detalle: detalle.trim() || undefined,
@@ -215,6 +224,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
 
     // Reset form
     setProveedorId('');
+    setParticipanteId('');
     setProyectoId('');
     setDetalle('');
     setObservaciones('');
@@ -230,6 +240,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
 
   const handleClose = () => {
     setProveedorId('');
+    setParticipanteId('');
     setProyectoId('');
     setDetalle('');
     setObservaciones('');
@@ -263,7 +274,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
         {/* Body - Scrollable */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-            
+
             {/* Proyecto */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -275,6 +286,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
                   setProyectoId(e.target.value);
                   onProyectoChange?.(e.target.value);
                   setProveedorId('');
+                  setParticipanteId('');
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 style={{ maxHeight: '200px' }}
@@ -282,13 +294,38 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
               >
                 <option value="">Seleccione un proyecto</option>
                 {proyectos.map((proyecto) => (
-                  <option 
-                    key={proyecto.id} 
+                  <option
+                    key={proyecto.id}
                     value={proyecto.id}
                     title={proyecto.nombre}
                     className="py-2"
                   >
                     {proyecto.nombre.length > 80 ? proyecto.nombre.substring(0, 80) + '...' : proyecto.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Servicio / Rol */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Descripción del Servicio <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={participanteId}
+                onChange={(e) => setParticipanteId(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                required
+                disabled={!proyectoId}
+              >
+                <option value="">{!proyectoId ? 'Primero seleccione un proyecto' : 'Seleccione su rol/servicio'}</option>
+                {participantes.map((p) => (
+                  <option
+                    key={p.id}
+                    value={p.id}
+                    title={p.descripcion}
+                  >
+                    {p.descripcion}
                   </option>
                 ))}
               </select>
@@ -308,8 +345,8 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
               >
                 <option value="">{!proyectoId ? 'Primero seleccione un proyecto' : 'Seleccione un proveedor'}</option>
                 {proveedores.map((proveedor) => (
-                  <option 
-                    key={proveedor.id} 
+                  <option
+                    key={proveedor.id}
                     value={proveedor.id}
                     title={proveedor.nombre}
                   >
@@ -408,7 +445,7 @@ export default function OrdenCompraModal({ isOpen, onClose, onSubmit, proveedore
 
                         {/* Dropdown de Sugerencias */}
                         {showSuggestions === item.id && suggestions.length > 0 && (
-                          <div 
+                          <div
                             ref={suggestionsRef}
                             className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
                           >

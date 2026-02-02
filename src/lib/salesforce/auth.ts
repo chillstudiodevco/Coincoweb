@@ -14,7 +14,7 @@ let tokenExpiresAt: number | null = null;
  */
 async function isTokenValid(token: string): Promise<boolean> {
   const instanceUrl = process.env.SALESFORCE_INSTANCE_URL;
-  
+
   if (!instanceUrl) {
     console.warn('⚠️ [AUTH] SALESFORCE_INSTANCE_URL no configurada, no se puede validar token');
     return false;
@@ -22,7 +22,7 @@ async function isTokenValid(token: string): Promise<boolean> {
 
   try {
     console.log('🔍 [AUTH] Validando token de Salesforce...');
-    
+
     // Hacer una petición ligera a Salesforce para verificar el token
     const response = await fetch(`${instanceUrl}/services/data/v59.0/limits`, {
       method: 'GET',
@@ -33,7 +33,7 @@ async function isTokenValid(token: string): Promise<boolean> {
 
     const isValid = response.ok;
     console.log(isValid ? '✅ [AUTH] Token válido' : '❌ [AUTH] Token inválido o expirado');
-    
+
     return isValid;
   } catch (error) {
     console.error('❌ [AUTH] Error al validar token:', error);
@@ -55,6 +55,8 @@ async function getSalesforceToken(): Promise<string> {
     throw new Error('Faltan credenciales de Salesforce en variables de entorno');
   }
 
+
+
   const response = await fetch(`${loginUrl}/services/oauth2/token`, {
     method: 'POST',
     headers: {
@@ -75,7 +77,7 @@ async function getSalesforceToken(): Promise<string> {
 
   const data = await response.json();
   console.log('✅ [AUTH] Nuevo token obtenido exitosamente');
-  
+
   return data.access_token;
 }
 
@@ -94,7 +96,7 @@ export async function getValidToken(): Promise<string> {
     const edgeToken = await get<string>('salesforce_access_token');
     if (edgeToken) {
       console.log('📦 [AUTH] Token encontrado en Edge Config, validando...');
-      
+
       // Validar el token antes de usarlo
       const isValid = await isTokenValid(edgeToken);
       if (isValid) {
@@ -115,7 +117,7 @@ export async function getValidToken(): Promise<string> {
   // 2. Verificar caché en memoria
   if (cachedToken && tokenExpiresAt && Date.now() < tokenExpiresAt) {
     console.log('💾 [AUTH] Token en caché, validando...');
-    
+
     // Validar el token en caché
     const isValid = await isTokenValid(cachedToken);
     if (isValid) {

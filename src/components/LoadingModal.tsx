@@ -20,7 +20,7 @@ export default function LoadingModal({ isOpen, message = 'Procesando...' }: Load
                         style={{ borderTopColor: '#006935' }}
                     ></div>
 
-                    {/* Inner Ico */}
+                    {/* Inner Icon */}
                     <div className="absolute inset-0 flex items-center justify-center">
                         <i className="fas fa-circle-notch text-xl text-green-600 animate-pulse"></i>
                     </div>

@@ -69,7 +69,7 @@ export default function ExperienceSection() {
         <div className="absolute top-20 right-20 w-64 h-64 bg-coinco-green/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-20 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl"></div>
       </div>
-      
+
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <div className="inline-block p-4 bg-coinco-green/10 rounded-full mb-6">
@@ -87,7 +87,7 @@ export default function ExperienceSection() {
         {/* Estadísticas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {stats.map((stat, index) => (
-            <div 
+            <div
               key={index}
               className="group bg-white/60 backdrop-blur-sm p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-white/30 text-center"
               style={{
@@ -113,7 +113,7 @@ export default function ExperienceSection() {
             <h3 className="text-2xl font-bold text-coinco-dark mb-2">Nuestros Contratantes</h3>
             <p className="text-gray-600">Hemos tenido el honor de trabajar con entidades de prestigio</p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {clients.map((client, index) => (
               <div
