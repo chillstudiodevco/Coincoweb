@@ -3,34 +3,34 @@ import Image from 'next/image';
 export default function ProjectsSection() {
   const projects = [
     {
-      src: "/construccion.png",
+      src: "/CONSTRUCCIÓN DE EDIFICACIONES.jpg",
       alt: "Construcción de Edificaciones",
       title: "Construcción de Edificaciones"
     },
     {
-      src: "/demarcacion_vial.png",
-      alt: "Demarcación Vial",
-      title: "Demarcación Vial"
+      src: "/MEJORAMIENTO DE VIVIENDA.jpg",
+      alt: "Mejoramiento de vivienda",
+      title: "Mejoramiento de vivienda"
     },
     {
-      src: "/reforzamiento_estructural.png",
-      alt: "Reforzamiento Estructural",
-      title: "Reforzamiento Estructural"
-    },
-    {
-      src: "/alcantarillado.png",
-      alt: "Construcción de Alcantarillado",
-      title: "Construcción de Alcantarillado"
-    },
-    {
-      src: "/mantenimiento_vial.png",
-      alt: "Mantenimiento de Vías",
-      title: "Mantenimiento de Vías"
-    },
-    {
-      src: "/mantenimiento_edificaciones.png",
+      src: "/MANTENIMIENTO DE EDIFICACIONES.png",
       alt: "Mantenimiento de Edificaciones",
       title: "Mantenimiento de Edificaciones"
+    },
+    {
+      src: "/REFORZAMIENTO ESTRUCTUAL.png",
+      alt: "Reforzamiento estructural",
+      title: "Reforzamiento estructural"
+    },
+    {
+      src: "/MONTAJE DE CUBIERTAS.png",
+      alt: "Montaje de cubiertas",
+      title: "Montaje de cubiertas"
+    },
+    {
+      src: "/INSTALACIÓN PANELERÍA ACÚSTICA.jpg",
+      alt: "Instalación de panelería acústica",
+      title: "Instalación de panelería acústica"
     }
   ];
 
